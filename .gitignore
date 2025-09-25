@@ -3,6 +3,6 @@
 .DS_Store
 /.vscode
 *-key.json
-package-lock.json
 build
 tsconfig.tsbuildinfo
+.env

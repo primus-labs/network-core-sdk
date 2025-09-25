@@ -1,0 +1,1349 @@
+[
+  {
+    "type": "function",
+    "name": "callbackGasLimit",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getInitializedVersion",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "initialize",
+    "inputs": [
+      {
+        "name": "owner",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "nodeAddress",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "primusFeeAddress",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "taskTimeout_",
+        "type": "uint64",
+        "internalType": "uint64"
+      },
+      {
+        "name": "primusFee_",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "attestorFee_",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "gasLimit",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "maxUnsettledTaskCount_",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "maxUnsettledTaskCount",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "nodeContract",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract INode"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "owner",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "primusAddress",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "queryBalance",
+    "inputs": [
+      {
+        "name": "user",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "tokenSymbol",
+        "type": "uint8",
+        "internalType": "enum TokenSymbol"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "balance",
+        "type": "tuple",
+        "internalType": "struct Balance",
+        "components": [
+          {
+            "name": "tokenSymbol",
+            "type": "uint8",
+            "internalType": "enum TokenSymbol"
+          },
+          {
+            "name": "toWithdraw",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "toLock",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "toWithdrawTaskCount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "toLockTaskCount",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "queryLatestFeeInfo",
+    "inputs": [
+      {
+        "name": "tokenSymbol",
+        "type": "uint8",
+        "internalType": "enum TokenSymbol"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "feeInfo",
+        "type": "tuple",
+        "internalType": "struct FeeInfo",
+        "components": [
+          {
+            "name": "primusFee",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "attestorFee",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "settedAt",
+            "type": "uint64",
+            "internalType": "uint64"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "queryRecipientTaskResults",
+    "inputs": [
+      {
+        "name": "recipient",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "templateId",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "offset",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "limit",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "_taskResults",
+        "type": "tuple[]",
+        "internalType": "struct TaskResult[]",
+        "components": [
+          {
+            "name": "attestor",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "taskId",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "attestation",
+            "type": "tuple",
+            "internalType": "struct Attestation",
+            "components": [
+              {
+                "name": "recipient",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "request",
+                "type": "tuple[]",
+                "internalType": "struct AttNetworkRequest[]",
+                "components": [
+                  {
+                    "name": "url",
+                    "type": "string",
+                    "internalType": "string"
+                  },
+                  {
+                    "name": "header",
+                    "type": "string",
+                    "internalType": "string"
+                  },
+                  {
+                    "name": "method",
+                    "type": "string",
+                    "internalType": "string"
+                  },
+                  {
+                    "name": "body",
+                    "type": "string",
+                    "internalType": "string"
+                  }
+                ]
+              },
+              {
+                "name": "responseResolve",
+                "type": "tuple[]",
+                "internalType": "struct AttNetworkOneUrlResponseResolve[]",
+                "components": [
+                  {
+                    "name": "oneUrlResponseResolve",
+                    "type": "tuple[]",
+                    "internalType": "struct AttNetworkResponseResolve[]",
+                    "components": [
+                      {
+                        "name": "keyName",
+                        "type": "string",
+                        "internalType": "string"
+                      },
+                      {
+                        "name": "parseType",
+                        "type": "string",
+                        "internalType": "string"
+                      },
+                      {
+                        "name": "parsePath",
+                        "type": "string",
+                        "internalType": "string"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "data",
+                "type": "string",
+                "internalType": "string"
+              },
+              {
+                "name": "attConditions",
+                "type": "string",
+                "internalType": "string"
+              },
+              {
+                "name": "timestamp",
+                "type": "uint64",
+                "internalType": "uint64"
+              },
+              {
+                "name": "additionParams",
+                "type": "string",
+                "internalType": "string"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "totalCount",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "queryTask",
+    "inputs": [
+      {
+        "name": "taskId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "taskInfo",
+        "type": "tuple",
+        "internalType": "struct TaskInfo",
+        "components": [
+          {
+            "name": "templateId",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "submitter",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "attestors",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "taskResults",
+            "type": "tuple[]",
+            "internalType": "struct TaskResult[]",
+            "components": [
+              {
+                "name": "attestor",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "taskId",
+                "type": "bytes32",
+                "internalType": "bytes32"
+              },
+              {
+                "name": "attestation",
+                "type": "tuple",
+                "internalType": "struct Attestation",
+                "components": [
+                  {
+                    "name": "recipient",
+                    "type": "address",
+                    "internalType": "address"
+                  },
+                  {
+                    "name": "request",
+                    "type": "tuple[]",
+                    "internalType": "struct AttNetworkRequest[]",
+                    "components": [
+                      {
+                        "name": "url",
+                        "type": "string",
+                        "internalType": "string"
+                      },
+                      {
+                        "name": "header",
+                        "type": "string",
+                        "internalType": "string"
+                      },
+                      {
+                        "name": "method",
+                        "type": "string",
+                        "internalType": "string"
+                      },
+                      {
+                        "name": "body",
+                        "type": "string",
+                        "internalType": "string"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "responseResolve",
+                    "type": "tuple[]",
+                    "internalType": "struct AttNetworkOneUrlResponseResolve[]",
+                    "components": [
+                      {
+                        "name": "oneUrlResponseResolve",
+                        "type": "tuple[]",
+                        "internalType": "struct AttNetworkResponseResolve[]",
+                        "components": [
+                          {
+                            "name": "keyName",
+                            "type": "string",
+                            "internalType": "string"
+                          },
+                          {
+                            "name": "parseType",
+                            "type": "string",
+                            "internalType": "string"
+                          },
+                          {
+                            "name": "parsePath",
+                            "type": "string",
+                            "internalType": "string"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "data",
+                    "type": "string",
+                    "internalType": "string"
+                  },
+                  {
+                    "name": "attConditions",
+                    "type": "string",
+                    "internalType": "string"
+                  },
+                  {
+                    "name": "timestamp",
+                    "type": "uint64",
+                    "internalType": "uint64"
+                  },
+                  {
+                    "name": "additionParams",
+                    "type": "string",
+                    "internalType": "string"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "submittedAt",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "tokenSymbol",
+            "type": "uint8",
+            "internalType": "enum TokenSymbol"
+          },
+          {
+            "name": "callback",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "taskStatus",
+            "type": "uint8",
+            "internalType": "enum TaskStatus"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "queryUnsettledTasks",
+    "inputs": [
+      {
+        "name": "user",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "tokenSymbol",
+        "type": "uint8",
+        "internalType": "enum TokenSymbol"
+      },
+      {
+        "name": "offset",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "limit",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "taskInfos",
+        "type": "tuple[]",
+        "internalType": "struct TaskInfo[]",
+        "components": [
+          {
+            "name": "templateId",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "submitter",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "attestors",
+            "type": "address[]",
+            "internalType": "address[]"
+          },
+          {
+            "name": "taskResults",
+            "type": "tuple[]",
+            "internalType": "struct TaskResult[]",
+            "components": [
+              {
+                "name": "attestor",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "taskId",
+                "type": "bytes32",
+                "internalType": "bytes32"
+              },
+              {
+                "name": "attestation",
+                "type": "tuple",
+                "internalType": "struct Attestation",
+                "components": [
+                  {
+                    "name": "recipient",
+                    "type": "address",
+                    "internalType": "address"
+                  },
+                  {
+                    "name": "request",
+                    "type": "tuple[]",
+                    "internalType": "struct AttNetworkRequest[]",
+                    "components": [
+                      {
+                        "name": "url",
+                        "type": "string",
+                        "internalType": "string"
+                      },
+                      {
+                        "name": "header",
+                        "type": "string",
+                        "internalType": "string"
+                      },
+                      {
+                        "name": "method",
+                        "type": "string",
+                        "internalType": "string"
+                      },
+                      {
+                        "name": "body",
+                        "type": "string",
+                        "internalType": "string"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "responseResolve",
+                    "type": "tuple[]",
+                    "internalType": "struct AttNetworkOneUrlResponseResolve[]",
+                    "components": [
+                      {
+                        "name": "oneUrlResponseResolve",
+                        "type": "tuple[]",
+                        "internalType": "struct AttNetworkResponseResolve[]",
+                        "components": [
+                          {
+                            "name": "keyName",
+                            "type": "string",
+                            "internalType": "string"
+                          },
+                          {
+                            "name": "parseType",
+                            "type": "string",
+                            "internalType": "string"
+                          },
+                          {
+                            "name": "parsePath",
+                            "type": "string",
+                            "internalType": "string"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "name": "data",
+                    "type": "string",
+                    "internalType": "string"
+                  },
+                  {
+                    "name": "attConditions",
+                    "type": "string",
+                    "internalType": "string"
+                  },
+                  {
+                    "name": "timestamp",
+                    "type": "uint64",
+                    "internalType": "uint64"
+                  },
+                  {
+                    "name": "additionParams",
+                    "type": "string",
+                    "internalType": "string"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "submittedAt",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "tokenSymbol",
+            "type": "uint8",
+            "internalType": "enum TokenSymbol"
+          },
+          {
+            "name": "callback",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "taskStatus",
+            "type": "uint8",
+            "internalType": "enum TaskStatus"
+          }
+        ]
+      },
+      {
+        "name": "totalCount",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "renounceOwnership",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "reportResult",
+    "inputs": [
+      {
+        "name": "taskId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "attestation",
+        "type": "tuple",
+        "internalType": "struct Attestation",
+        "components": [
+          {
+            "name": "recipient",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "request",
+            "type": "tuple[]",
+            "internalType": "struct AttNetworkRequest[]",
+            "components": [
+              {
+                "name": "url",
+                "type": "string",
+                "internalType": "string"
+              },
+              {
+                "name": "header",
+                "type": "string",
+                "internalType": "string"
+              },
+              {
+                "name": "method",
+                "type": "string",
+                "internalType": "string"
+              },
+              {
+                "name": "body",
+                "type": "string",
+                "internalType": "string"
+              }
+            ]
+          },
+          {
+            "name": "responseResolve",
+            "type": "tuple[]",
+            "internalType": "struct AttNetworkOneUrlResponseResolve[]",
+            "components": [
+              {
+                "name": "oneUrlResponseResolve",
+                "type": "tuple[]",
+                "internalType": "struct AttNetworkResponseResolve[]",
+                "components": [
+                  {
+                    "name": "keyName",
+                    "type": "string",
+                    "internalType": "string"
+                  },
+                  {
+                    "name": "parseType",
+                    "type": "string",
+                    "internalType": "string"
+                  },
+                  {
+                    "name": "parsePath",
+                    "type": "string",
+                    "internalType": "string"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "data",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "attConditions",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "timestamp",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "additionParams",
+            "type": "string",
+            "internalType": "string"
+          }
+        ]
+      },
+      {
+        "name": "signature",
+        "type": "bytes",
+        "internalType": "bytes"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setCallbackGasLimit",
+    "inputs": [
+      {
+        "name": "gasLimit",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setFeeInfo",
+    "inputs": [
+      {
+        "name": "tokenSymbol",
+        "type": "uint8",
+        "internalType": "enum TokenSymbol"
+      },
+      {
+        "name": "_primusFee",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "_attestorFee",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setMaxUnsettledTaskCount",
+    "inputs": [
+      {
+        "name": "maxCount",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setNodeContract",
+    "inputs": [
+      {
+        "name": "nodeAddress",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setPrimusAddress",
+    "inputs": [
+      {
+        "name": "addr",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setTaskTimeout",
+    "inputs": [
+      {
+        "name": "_taskTimeout",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "submitTask",
+    "inputs": [
+      {
+        "name": "sender",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "templateId",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "attestorCount",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "tokenSymbol",
+        "type": "uint8",
+        "internalType": "enum TokenSymbol"
+      },
+      {
+        "name": "callback",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "taskId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "function",
+    "name": "taskCount",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "taskTimeout",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "transferOwnership",
+    "inputs": [
+      {
+        "name": "newOwner",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "upgradeToV2",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "verifyTaskResult",
+    "inputs": [
+      {
+        "name": "_taskResult",
+        "type": "tuple",
+        "internalType": "struct TaskResult",
+        "components": [
+          {
+            "name": "attestor",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "taskId",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "attestation",
+            "type": "tuple",
+            "internalType": "struct Attestation",
+            "components": [
+              {
+                "name": "recipient",
+                "type": "address",
+                "internalType": "address"
+              },
+              {
+                "name": "request",
+                "type": "tuple[]",
+                "internalType": "struct AttNetworkRequest[]",
+                "components": [
+                  {
+                    "name": "url",
+                    "type": "string",
+                    "internalType": "string"
+                  },
+                  {
+                    "name": "header",
+                    "type": "string",
+                    "internalType": "string"
+                  },
+                  {
+                    "name": "method",
+                    "type": "string",
+                    "internalType": "string"
+                  },
+                  {
+                    "name": "body",
+                    "type": "string",
+                    "internalType": "string"
+                  }
+                ]
+              },
+              {
+                "name": "responseResolve",
+                "type": "tuple[]",
+                "internalType": "struct AttNetworkOneUrlResponseResolve[]",
+                "components": [
+                  {
+                    "name": "oneUrlResponseResolve",
+                    "type": "tuple[]",
+                    "internalType": "struct AttNetworkResponseResolve[]",
+                    "components": [
+                      {
+                        "name": "keyName",
+                        "type": "string",
+                        "internalType": "string"
+                      },
+                      {
+                        "name": "parseType",
+                        "type": "string",
+                        "internalType": "string"
+                      },
+                      {
+                        "name": "parsePath",
+                        "type": "string",
+                        "internalType": "string"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "data",
+                "type": "string",
+                "internalType": "string"
+              },
+              {
+                "name": "attConditions",
+                "type": "string",
+                "internalType": "string"
+              },
+              {
+                "name": "timestamp",
+                "type": "uint64",
+                "internalType": "uint64"
+              },
+              {
+                "name": "additionParams",
+                "type": "string",
+                "internalType": "string"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "withdrawBalance",
+    "inputs": [
+      {
+        "name": "tokenSymbol",
+        "type": "uint8",
+        "internalType": "enum TokenSymbol"
+      },
+      {
+        "name": "limit",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "event",
+    "name": "CallbackFailed",
+    "inputs": [
+      {
+        "name": "taskId",
+        "type": "bytes32",
+        "indexed": false,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "callback",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "reason",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "Initialized",
+    "inputs": [
+      {
+        "name": "version",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "OwnershipTransferred",
+    "inputs": [
+      {
+        "name": "previousOwner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "newOwner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ReportResult",
+    "inputs": [
+      {
+        "name": "attestor",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "taskId",
+        "type": "bytes32",
+        "indexed": false,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "user",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "tokenSymbol",
+        "type": "uint8",
+        "indexed": false,
+        "internalType": "enum TokenSymbol"
+      },
+      {
+        "name": "primusFee",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "attestorFee",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "SubmitTask",
+    "inputs": [
+      {
+        "name": "submitter",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "taskId",
+        "type": "bytes32",
+        "indexed": false,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "templateId",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "attestors",
+        "type": "address[]",
+        "indexed": false,
+        "internalType": "address[]"
+      },
+      {
+        "name": "submittedAt",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "WithdrawBalance",
+    "inputs": [
+      {
+        "name": "user",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "tokenSymbol",
+        "type": "uint8",
+        "indexed": false,
+        "internalType": "enum TokenSymbol"
+      },
+      {
+        "name": "",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "settledTaskIds",
+        "type": "bytes32[]",
+        "indexed": false,
+        "internalType": "bytes32[]"
+      },
+      {
+        "name": "taskStatuses",
+        "type": "uint8[]",
+        "indexed": false,
+        "internalType": "enum TaskStatus[]"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "AlreadyReportResult",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidInitialization",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidTaskReporter",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidTaskResult",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NoValidFeeInfo",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotInitializing",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "OwnableInvalidOwner",
+    "inputs": [
+      {
+        "name": "owner",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "OwnableUnauthorizedAccount",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ReentrancyGuardReentrantCall",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "TaskNotFound",
+    "inputs": []
+  }
+]
