@@ -1,2 +1,14 @@
 # network-core-sdk
-Primus Network Core SDK
+Primus Network zkTLS Core SDK
+
+## installation
+
+```sh
+npm install
+```
+
+
+## test
+
+```sh
+npm run test
