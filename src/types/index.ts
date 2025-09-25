@@ -1,10 +1,10 @@
-import { BigNumber } from "ethers";
+import { BigNumber } from 'ethers';
 
 export type AttNetworkRequest = {
   url: string,
-  header: string, // json string
+  header: object,
   method: string,
-  body: string
+  body: any
 }
 export type AttNetworkResponseResolve = {
   keyName: string,
@@ -18,7 +18,7 @@ export type Attestor = {
 export type Attestation = {
   recipient: string,
   request: AttNetworkRequest,
-  reponseResolve: AttNetworkResponseResolve[],
+  responseResolve: AttNetworkResponseResolve[],
   data: string, // json string
   attConditions: string, // json string
   timestamp: number,
@@ -52,12 +52,15 @@ export type SeniorAttestationParams = {
   backUrl?: string;
   computeMode?: ComputeMode;
   extendedParams?: string;
+  sslCipher?: AttSslCipher;
 }
 
 export type AttestCommonParams = PrimaryAttestationParams & SeniorAttestationParams;
 
 export type GenerateAttestationParams = AttestCommonParams & {
   algoDomain?: string;
+  requests: AttNetworkRequest[];
+  responseResolves: AttNetworkResponseResolve[][];
 };
 
 
@@ -85,6 +88,7 @@ export type AttSubCondition = {
 export type AttCondition = AttSubCondition[]
 export type AttConditions = AttCondition[]
 export type ComputeMode = 'nonecomplete' | 'nonepartial' | 'normal';
+export type AttSslCipher = 'ECDHE-RSA-AES128-GCM-SHA256' | 'ECDHE-ECDSA-AES128-GCM-SHA256'
 
 export enum NodeStatus {
   UNREGISTERED = 0, // Attestor Node not registered
@@ -163,7 +167,14 @@ export type FeeInfo = {
   settedAt: BigNumber;
 }
 
-export type AttestAfterSubmitTaskParams = AttestCommonParams & SubmitTaskReturnParams
+export type AttNetworkOneUrlResponseResolve = {
+  oneUrlResponseResolve: AttNetworkResponseResolve[] ;
+}
+
+export type AttestAfterSubmitTaskParams = AttestCommonParams & SubmitTaskReturnParams & {
+  requests: AttNetworkRequest[];
+  responseResolves: AttNetworkResponseResolve[][];
+}
 export type AttestorRawResultMap = { [taskId: string]: RawAttestationResultList }
 export type ProgressStatusMap = { [taskId: string]: ProgressStatus }
 

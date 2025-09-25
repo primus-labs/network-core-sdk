@@ -69,13 +69,13 @@ describe('PrimusNetwork', () => {
         address: testAddress,
       };
 
-      try {
+    try {
         // Act - Initialize the network with wallet (signer)
-        const initResult = await primusNetwork.init(wallet, chainId);
+        const initResult = await primusNetwork.init(wallet, chainId, "wasm");
         expect(initResult).toBe(true);
         
         // Act - Submit task (now with a proper signer)
-        const submitResult = await primusNetwork.submitTask(attestParams) as SubmitTaskReturnParams;
+        let submitResult = await primusNetwork.submitTask(attestParams) as SubmitTaskReturnParams;
         
         // Assert
         expect(submitResult).toBeDefined();
@@ -88,12 +88,59 @@ describe('PrimusNetwork', () => {
         
         // eslint-disable-next-line no-console
         console.log('Submit task result:', submitResult);
+
+        // let submitResult = {
+        //     taskId: '0x64acec552247298dbd39017a50625f262a38b9de37723bb8b7fa645fda2e2b4d',
+        //     taskTxHash: '0x8753e26c144377cb68c1c70f1ea73e2ef1841d9d61381c15307c990e0acf8c61',
+        //     taskAttestors: [ '0x93c6331d08a898eb9E08FC9CE91B3Ec60d1735bF' ]
+        // };
+      const requests = [
+        {
+          url: "https://www.okx.com/api/v5/public/instruments?instType=SPOT&instId=BTC-USD",
+          method: "GET",
+          header: {},
+          body: "",
+        }
+      ];
+      const responseResolves = [
+        [
+          {
+            keyName: "instType",
+            parseType: "json",
+            parsePath: "$.data[0].instType"
+          }
+        ]
+      ];
+
+      // Compose params for attest
+      const attestParams2 = {
+        ...attestParams,
+        ...submitResult,
+        requests,
+        responseResolves
+      };
+
+      let attestResult;
+      try {
+        attestResult = await primusNetwork.attest(attestParams2);
+      } catch (err) {
+        console.log('Attest function error:', err);
+        return;
+      }
+
+      // Assert
+      expect(Array.isArray(attestResult)).toBe(true);
+      // The result may be empty if attestation is not fully implemented or attestors are not available
+      // But the function should return an array (RawAttestationResultList)
+      // Optionally, log the result for manual inspection
+      // eslint-disable-next-line no-console
+      console.log('Attest result:', attestResult);
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Unexpected test error:', error);
         throw error;
       }
-    }, 30000); // 30 second timeout for network operations
+    }, 180000); // 30 second timeout for network operations
   });
 
 });

@@ -56,7 +56,7 @@ export function getInstanceProperties(instance: any) {
 export function encodeSolanaAttestation(att: Attestation) {
   const encodedData = ethers.utils.solidityPack(
     ["bytes32", "bytes32", "bytes32", "string", "string", "uint64", "string"],
-    [solanaAddressToBytes32(att.recipient), encodeRequest(att.request), encodeResponse(att.reponseResolve),
+    [solanaAddressToBytes32(att.recipient), encodeRequest(att.request), encodeResponse(att.responseResolve),
     att.data, att.attConditions, att.timestamp, att.additionParams]
   );
   return ethers.utils.keccak256(encodedData);
@@ -68,7 +68,7 @@ export function encodeAttestation(att: Attestation) {
   } else {
     const encodedData = ethers.utils.solidityPack(
       ["address", "bytes32", "bytes32", "string", "string", "uint64", "string"],
-      [att.recipient, encodeRequest(att.request), encodeResponse(att.reponseResolve),
+      [att.recipient, encodeRequest(att.request), encodeResponse(att.responseResolve),
       att.data, att.attConditions, att.timestamp, att.additionParams]
     );
     return ethers.utils.keccak256(encodedData);

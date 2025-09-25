@@ -1,11 +1,13 @@
 import { ethers } from 'ethers';
 import { SUPPORTEDCHAINIDS, SUPPORTEDCHAINIDSMAP, /*ONEMINUTE*/ } from "./config/constants";
-// import { Zktls } from "./classes/Zktls";
+import { assemblyParams } from './assembly_params';
+import { init, getAttestation, getAttestationResult, AlgorithmBackend } from "./primus_zk";
 import { NodeContract } from "./classes/NodeContract";
 import { TaskContract } from "./classes/TaskContract";
-import { /*findFastestWs, resultToObject,*/ formatErrFn } from "./utils";
-import { /*TaskStatus, TaskResult,*/ SubmitTaskReturnParams, /*AttestAfterSubmitTaskParams, TokenSymbol, RawAttestationResultList,*/ PrimaryAttestationParams } from './types/index'
-// import { SDK_VERSION } from './version';
+import { findFastestWs, /*resultToObject,*/ formatErrFn } from "./utils";
+import { /*TaskStatus, TaskResult,*/ SubmitTaskReturnParams, AttestAfterSubmitTaskParams, /*TokenSymbol,*/ RawAttestationResultList, PrimaryAttestationParams } from './types/index'
+import { SDK_VERSION } from './version';
+import { ZkAttestationError } from './classes/Error';
 
 class PrimusNetwork {
   private provider!: ethers.providers.Web3Provider | ethers.providers.JsonRpcProvider | ethers.providers.JsonRpcSigner;
@@ -15,7 +17,7 @@ class PrimusNetwork {
   private _taskContract: TaskContract | undefined;
   private _nodeContract: NodeContract | undefined;
 
-  async init(provider: any, chainId: number) {
+  async init(provider: any, chainId: number, mode: AlgorithmBackend = 'auto') {
     return new Promise(async (resolve, reject) => {
       try {
         if (!this.supportedChainIds.includes(chainId as number)) {
@@ -48,8 +50,7 @@ class PrimusNetwork {
         this.provider = signer ?? formatProvider;
         this.chainId = chainId;
         console.log('init chainId', this.chainId);
-        // this._zktls = new Zktls();
-        // await this._zktls.init();
+        await init(mode);
         const activeChainInfo = SUPPORTEDCHAINIDSMAP[chainId as keyof typeof SUPPORTEDCHAINIDSMAP]
         this._taskContract = new TaskContract(this.provider, activeChainInfo.taskContractAddress);
         this._nodeContract = new NodeContract(this.provider, activeChainInfo.nodeContractAddress);
@@ -102,11 +103,10 @@ class PrimusNetwork {
     })
   }
 
-  /*async attest(attestParams: AttestAfterSubmitTaskParams): Promise<RawAttestationResultList> {
+  async attest(attestParams: AttestAfterSubmitTaskParams): Promise<RawAttestationResultList> {
     return new Promise(async (resolve, reject) => {
       try {
         const { taskId, taskTxHash, taskAttestors: attestorIds, ...attParams } = attestParams
-        // let reportTxReceipt;
 
         // 1.get attestors info
         const attestorsInfoArr = await Promise.all(attestorIds.map((id: string) => this._nodeContract?.getNodeInfo(id)))
@@ -116,13 +116,13 @@ class PrimusNetwork {
         const attestorsUrlArr = await Promise.all(attestorsUrlsArr.map((attestorUrls) => findFastestWs(attestorUrls)))
         console.log('testSpeed done', attestorsUrlArr)
         // 3.Use the selected nodes to perform proofs sequentially.
-        let attArr = []
+        let attArr: RawAttestationResultList = []
 
         for (const api of attestorsUrlArr) {
           let extendedParamsObj = attParams.extendedParams ? JSON.parse(attParams.extendedParams) : {}
           Object.assign(extendedParamsObj, {
             taskId, taskTxHash, chainId: this.chainId,
-            primusNetworkSdkVersion: SDK_VERSION,
+            primusNetworkCoreSdkVersion: SDK_VERSION,
           })
 
           let formatAttParams = {
@@ -130,36 +130,38 @@ class PrimusNetwork {
             algoDomain: api,
             extendedParams: JSON.stringify(extendedParamsObj)
           }
-          let att = await this._zktls?.startAttestation(formatAttParams)
-          if (att) {
-            att.attestation = JSON.parse(att.attestation)
-            // reportTxReceipt = await this.getReportTxReceipt(att.reportTxHash)
-            attArr.push(att)
+          const attestationParams = assemblyParams(formatAttParams);
+          console.log('------------------------------------------------attestationParams', attestationParams)
+          const getAttestationRes = await getAttestation(attestationParams);
+          console.log('getAttestation:', getAttestationRes);
+          if (getAttestationRes.retcode !== "0") {
+            return Promise.reject(new ZkAttestationError('00001'))
           }
+          const res: any = await getAttestationResult();
+          console.log('getAttestationResult:', res);
+          // if (att) {
+          //   att.attestation = JSON.parse(att.attestation)
+          //   attArr.push(att)
+          // }
         }
-        // this.attestorRawResultMap[taskId] = attArr
-        console.log('attestationList from extension', attArr)
+        console.log('attestationList:', attArr)
         return resolve(attArr)
-        // return resolve({
-        //   taskId,
-        //   blockNumber: reportTxReceipt?.blockNumber ?? 0
-        // })
       } catch (error) {
         return reject(error);
       }
     })
-  }*/
-
-  /* async getReportTxReceipt(reportTxHash: string, confirmations: number = 1, timeoutMs: number = ONEMINUTE) {
-    const hasWait = (this.provider as any)?.waitForTransaction;
-    const baseProvider = hasWait ? (this.provider as any) : (this.provider as any)?.provider;
-    if (!baseProvider || !baseProvider.waitForTransaction) {
-      throw new Error('Provider is not initialized properly');
-    }
-    baseProvider.pollingInterval = 1000
-    return baseProvider.waitForTransaction(reportTxHash, confirmations, timeoutMs);
   }
-  async withdrawBalance(tokenSymbol = TokenSymbol.ETH, limit = 100) {
+
+  // async getReportTxReceipt(reportTxHash: string, confirmations: number = 1, timeoutMs: number = ONEMINUTE) {
+  //   const hasWait = (this.provider as any)?.waitForTransaction;
+  //   const baseProvider = hasWait ? (this.provider as any) : (this.provider as any)?.provider;
+  //   if (!baseProvider || !baseProvider.waitForTransaction) {
+  //     throw new Error('Provider is not initialized properly');
+  //   }
+  //   baseProvider.pollingInterval = 1000
+  //   return baseProvider.waitForTransaction(reportTxHash, confirmations, timeoutMs);
+  // }
+  /*async withdrawBalance(tokenSymbol = TokenSymbol.ETH, limit = 100) {
     return new Promise(async (resolve, reject) => {
       try {
         const res = await this._taskContract?.withdrawBalance(tokenSymbol, limit)

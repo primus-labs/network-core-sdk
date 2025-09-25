@@ -1,12 +1,20 @@
 import { v4 as uuidv4 } from 'uuid';
-import { AttNetworkRequest, AttNetworkResponseResolve, SignedAttRequest } from './index.d'
-import { AlgorithmUrls } from './classes/AlgorithmUrls';
-export function assemblyParams(att: SignedAttRequest, algorithmUrls: AlgorithmUrls) {
-    const { primusMpcUrl, primusProxyUrl, proxyUrl } = algorithmUrls
+import { AttNetworkRequest, AttNetworkResponseResolve, GenerateAttestationParams } from './types/index';
+
+export function assemblyParams(att: GenerateAttestationParams) {
+    const { requests, responseResolves, sslCipher, algoDomain, attMode, address: userAddress, additionParams, extendedParams, backUrl } = att;
+    const attRequest = {
+        userAddress,
+        additionParams,
+        extendedParams,
+        backUrl
+    };
+    let primusProxyUrl = `wss://${algoDomain}/algorithm-proxy`;
+    let primusMpcUrl = `wss://${algoDomain}/algorithm`;
+    let proxyUrl = `wss://${algoDomain}/algoproxy`;
     let padoUrl = primusProxyUrl;
     let modelType = "proxytls";
-    const { attRequest: { request, responseResolves, attMode, userAddress, appId, additionParams, sslCipher}, appSignature } = att
-    let host = new URL(request.url).host;
+    let host = new URL(requests[0].url).host;
     const requestid = uuidv4();
     if (attMode?.algorithmType === "mpctls") {
         padoUrl = primusMpcUrl;
@@ -28,50 +36,49 @@ export function assemblyParams(att: SignedAttRequest, algorithmUrls: AlgorithmUr
         },
         authUseridHash: "",
         appParameters: {
-            appId: appId,
-            appSignParameters: JSON.stringify(att.attRequest),
-            appSignature: appSignature,
+            appId: "",
+            appSignParameters: JSON.stringify(attRequest),
+            appSignature: "",
             additionParams: additionParams || ''
         },
         reqType: "web",
         host,
-        requests: assemblyRequest(request),
+        requests: assemblyRequest(requests),
         responses: assemblyResponse(responseResolves),
         templateId: "",
         padoExtensionVersion: "0.3.21",
-        cipher: sslCipher,
+        cipher: sslCipher? sslCipher : "ECDHE-RSA-AES128-GCM-SHA256",
     };
     return attestationParams;
 }
 
-function assemblyRequest(request: AttNetworkRequest) {
-    let { url, header, method, body } = request;
-    const formatRequest = {
+function assemblyRequest(requests: AttNetworkRequest[]) {
+    return requests.map(request => {
+        const { url, header, method, body } = request;
+        return {
             url,
             method,
-            headers: {...header,'Accept-Encoding': 'identity'},
+            headers: { ...header, 'Accept-Encoding': 'identity' },
             body,
-        }
-    return [formatRequest]
+        };
+    });
 }
 
-function assemblyResponse(responseResolves: AttNetworkResponseResolve[]) {
-    const subconditions = responseResolves.map(rR => {
-        const {keyName, parsePath} = rR
-        return {
+function assemblyResponse(responseResolves: AttNetworkResponseResolve[][]) {
+    return responseResolves.map(subArr => {
+        const subconditions = subArr.map(({ keyName, parsePath }) => ({
             field: parsePath,
             reveal_id: keyName,
-            op: "REVEAL_STRING",
-            type: "FIELD_REVEAL"
-        }
-    })
-    const formatResponse = {
-        conditions: {
-            type:"CONDITION_EXPANSION",
-            op: "&",
-            subconditions
-        }
-    }
-    return [formatResponse];
+            op: 'REVEAL_STRING',
+            type: 'FIELD_REVEAL'
+        }));
+        return {
+            conditions: {
+                type: 'CONDITION_EXPANSION',
+                op: '&',
+                subconditions
+            }
+        };
+    });
 }
 
