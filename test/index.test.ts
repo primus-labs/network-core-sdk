@@ -123,6 +123,7 @@ describe('PrimusNetwork', () => {
       let attestResult;
       try {
         attestResult = await primusNetwork.attest(attestParams2);
+        console.log('attestResult:', attestResult);
       } catch (err) {
         console.log('Attest function error:', err);
         return;

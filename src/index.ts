@@ -8,6 +8,7 @@ import { findFastestWs, /*resultToObject,*/ formatErrFn } from "./utils";
 import { /*TaskStatus, TaskResult,*/ SubmitTaskReturnParams, AttestAfterSubmitTaskParams, /*TokenSymbol,*/ RawAttestationResultList, PrimaryAttestationParams } from './types/index'
 import { SDK_VERSION } from './version';
 import { ZkAttestationError } from './classes/Error';
+import { AttestationErrorCode } from 'config/error';
 
 class PrimusNetwork {
   private provider!: ethers.providers.Web3Provider | ethers.providers.JsonRpcProvider | ethers.providers.JsonRpcSigner;
@@ -135,17 +136,39 @@ class PrimusNetwork {
           const getAttestationRes = await getAttestation(attestationParams);
           console.log('getAttestation:', getAttestationRes);
           if (getAttestationRes.retcode !== "0") {
-            return Promise.reject(new ZkAttestationError('00001'))
+            return reject(new ZkAttestationError('00001'))
           }
           const res: any = await getAttestationResult();
           console.log('getAttestationResult:', res);
-          // if (att) {
-          //   att.attestation = JSON.parse(att.attestation)
-          //   attArr.push(att)
-          // }
+          const { retcode, content, details } = res
+          if (retcode === '0') {
+            const { balanceGreaterThanBaseValue, signature, encodedData, extraData } = content
+            if (balanceGreaterThanBaseValue === 'true' && signature) {
+              const encodedDataObj = JSON.parse(encodedData);
+              encodedDataObj.attestation = JSON.parse(encodedDataObj.attestation);
+              attArr.push(encodedDataObj);
+            } else if (!signature || balanceGreaterThanBaseValue === 'false') {
+              let errorCode;
+              if (
+                extraData &&
+                JSON.parse(extraData) &&
+                ['-1200010', '-1002001', '-1002002'].includes(
+                  JSON.parse(extraData).errorCode + ''
+                )
+              ) {
+                errorCode = JSON.parse(extraData).errorCode + '';
+              } else {
+                errorCode = '00104';
+              }
+              return reject(new ZkAttestationError(errorCode as AttestationErrorCode, '', res))
+            }
+          } else if (retcode === '2') {
+            const { errlog: { code } } = details;
+            return reject(new ZkAttestationError(code, '', res))
+          }
         }
-        console.log('attestationList:', attArr)
-        return resolve(attArr)
+        console.log('attestationList from algorithm', attArr);
+        return resolve(attArr);
       } catch (error) {
         return reject(error);
       }
