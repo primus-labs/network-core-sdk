@@ -1,11 +1,11 @@
 import { ethers } from 'ethers';
-import { SUPPORTEDCHAINIDS, SUPPORTEDCHAINIDSMAP, /*ONEMINUTE*/ } from "./config/constants";
+import { SUPPORTEDCHAINIDS, SUPPORTEDCHAINIDSMAP, ONEMINUTE } from "./config/constants";
 import { assemblyParams } from './assembly_params';
 import { init, getAttestation, getAttestationResult, AlgorithmBackend } from "./primus_zk";
 import { NodeContract } from "./classes/NodeContract";
 import { TaskContract } from "./classes/TaskContract";
-import { findFastestWs, /*resultToObject,*/ formatErrFn } from "./utils";
-import { /*TaskStatus, TaskResult,*/ SubmitTaskReturnParams, AttestAfterSubmitTaskParams, /*TokenSymbol,*/ RawAttestationResultList, PrimaryAttestationParams } from './types/index'
+import { findFastestWs, resultToObject, formatErrFn } from "./utils";
+import { TaskStatus, TaskResult, SubmitTaskReturnParams, AttestAfterSubmitTaskParams, TokenSymbol, RawAttestationResultList, PrimaryAttestationParams } from './types/index'
 import { SDK_VERSION } from './version';
 import { ZkAttestationError } from './classes/Error';
 import { AttestationErrorCode } from 'config/error';
@@ -175,16 +175,17 @@ class PrimusNetwork {
     })
   }
 
-  // async getReportTxReceipt(reportTxHash: string, confirmations: number = 1, timeoutMs: number = ONEMINUTE) {
-  //   const hasWait = (this.provider as any)?.waitForTransaction;
-  //   const baseProvider = hasWait ? (this.provider as any) : (this.provider as any)?.provider;
-  //   if (!baseProvider || !baseProvider.waitForTransaction) {
-  //     throw new Error('Provider is not initialized properly');
-  //   }
-  //   baseProvider.pollingInterval = 1000
-  //   return baseProvider.waitForTransaction(reportTxHash, confirmations, timeoutMs);
-  // }
-  /*async withdrawBalance(tokenSymbol = TokenSymbol.ETH, limit = 100) {
+  async getReportTxReceipt(reportTxHash: string, confirmations: number = 1, timeoutMs: number = ONEMINUTE) {
+    const hasWait = (this.provider as any)?.waitForTransaction;
+    const baseProvider = hasWait ? (this.provider as any) : (this.provider as any)?.provider;
+    if (!baseProvider || !baseProvider.waitForTransaction) {
+      throw new Error('Provider is not initialized properly');
+    }
+    baseProvider.pollingInterval = 1000
+    return baseProvider.waitForTransaction(reportTxHash, confirmations, timeoutMs);
+  }
+
+  async withdrawBalance(tokenSymbol = TokenSymbol.ETH, limit = 100) {
     return new Promise(async (resolve, reject) => {
       try {
         const res = await this._taskContract?.withdrawBalance(tokenSymbol, limit)
@@ -220,11 +221,11 @@ class PrimusNetwork {
         return reject(error)
       }
     })
-  }*/
+  }
 
 
   // Verify & polling contract for task result by taskId
-  /*async verifyAndPollTaskResult({ taskId, reportTxHash, intervalMs = 2000, timeoutMs = ONEMINUTE }: {
+  async verifyAndPollTaskResult({ taskId, reportTxHash, intervalMs = 2000, timeoutMs = ONEMINUTE }: {
     taskId: string,
     reportTxHash?: string,
     intervalMs: number,
@@ -326,7 +327,7 @@ class PrimusNetwork {
         timerFn()
       }
     });
-  }*/
+  }
 
 }
 

@@ -69,7 +69,7 @@ describe('PrimusNetwork', () => {
         address: testAddress,
       };
 
-    try {
+      try {
         // Act - Initialize the network with wallet (signer)
         const initResult = await primusNetwork.init(wallet, chainId, "wasm");
         expect(initResult).toBe(true);
@@ -94,40 +94,44 @@ describe('PrimusNetwork', () => {
         //     taskTxHash: '0x8753e26c144377cb68c1c70f1ea73e2ef1841d9d61381c15307c990e0acf8c61',
         //     taskAttestors: [ '0x93c6331d08a898eb9E08FC9CE91B3Ec60d1735bF' ]
         // };
-      const requests = [
-        {
-          url: "https://www.okx.com/api/v5/public/instruments?instType=SPOT&instId=BTC-USD",
-          method: "GET",
-          header: {},
-          body: "",
-        }
-      ];
-      const responseResolves = [
-        [
-          {
-            keyName: "instType",
-            parseType: "json",
-            parsePath: "$.data[0].instType"
-          }
-        ]
-      ];
+        const requests = [
+            {
+            url: "https://www.okx.com/api/v5/public/instruments?instType=SPOT&instId=BTC-USD",
+            method: "GET",
+            header: {},
+            body: "",
+            }
+        ];
+        const responseResolves = [
+            [
+            {
+                keyName: "instType",
+                parseType: "json",
+                parsePath: "$.data[0].instType"
+            }
+            ]
+        ];
 
-      // Compose params for attest
-      const attestParams2 = {
-        ...attestParams,
-        ...submitResult,
-        requests,
-        responseResolves
-      };
+        // Compose params for attest
+        const attestParams2 = {
+            ...attestParams,
+            ...submitResult,
+            requests,
+            responseResolves
+        };
 
-      let attestResult = await primusNetwork.attest(attestParams2);
-      // Assert
-      expect(Array.isArray(attestResult)).toBe(true);
-      // The result may be empty if attestation is not fully implemented or attestors are not available
-      // But the function should return an array (RawAttestationResultList)
-      // Optionally, log the result for manual inspection
-      // eslint-disable-next-line no-console
-      console.log('Attest result:', attestResult);
+        let attestResult = await primusNetwork.attest(attestParams2);
+        expect(Array.isArray(attestResult)).toBe(true);
+        console.log('Attest result:', attestResult);
+
+        const taskResult = await primusNetwork.verifyAndPollTaskResult({
+          taskId: attestResult[0].taskId,
+          reportTxHash: attestResult[0].reportTxHash,
+          intervalMs: 2000,
+          timeoutMs: 60000
+        });
+        expect(Array.isArray(taskResult)).toBe(true);
+        console.log('Task result:', taskResult);
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Unexpected test error:', error);
