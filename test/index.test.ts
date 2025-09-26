@@ -120,15 +120,7 @@ describe('PrimusNetwork', () => {
         responseResolves
       };
 
-      let attestResult;
-      try {
-        attestResult = await primusNetwork.attest(attestParams2);
-        console.log('attestResult:', attestResult);
-      } catch (err) {
-        console.log('Attest function error:', err);
-        return;
-      }
-
+      let attestResult = await primusNetwork.attest(attestParams2);
       // Assert
       expect(Array.isArray(attestResult)).toBe(true);
       // The result may be empty if attestation is not fully implemented or attestors are not available

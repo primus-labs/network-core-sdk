@@ -1,6 +1,7 @@
 export type AttestationErrorCode =
   "00001" | "00002" | '00003' | "00004" | '00005' | '00006' | "00009" | "00010" |
   "00101" | "00102" | "00103" | "00104" |
+  "01000" |
   "10001" | "10002" | "10003" | "10004" |
   "20001" | "20002" | "20003" | "20004" | "20005" |
   "30001" | "30002" | "30003" | "30004" |
@@ -9,6 +10,10 @@ export type AttestationErrorCode =
   "99999" |
   "-1200010"
 
+export type OnChainErrorCode =
+  "00007" | "00008"
+
+export type ErrorCode = AttestationErrorCode | OnChainErrorCode;
 
 export const ErrorCodeMAP = {
   '00000':'Operation too frequent. Please try again later.',
@@ -24,11 +29,17 @@ export const ErrorCodeMAP = {
   // '00010':'Verification failed. Please try again later.',
   // '00011':'Launch failed: unstable connection.',
   '00012':'Invalid Template ID.',
+  '00013': 'Target data missing. Please check whether the data json path in the request URL’s response aligns with your template.',
+  '00014': 'The verification process timed out.',
+  '00015': 'Invalid Algorithm Parameters',
+  '00016': 'Nothing to refund',
   // "00101":'Insufficient assets in your Trading Account. Please confirm and try again later.',
 
   // '00102':'Attestation requirements not met. Insufficient assets balance in Binance Spot Account.',
   //  "00103": 'This account may have already been bound to a wallet address, or your wallet address may already have a zkAttestation with another Binance account.',
   '00104': 'Not met the verification requirements.',
+
+  '01000': 'Attestation timeout.',
 
   '10001':'Unstable internet connection. Please try again.',
   '10002':'Unstable internet connection. Please try again.',
@@ -59,6 +70,27 @@ export const ErrorCodeMAP = {
   '99999':'Undefined error.',
   '-1200010':"Invalid message.",
   '-1002001':"Invalid App ID.",
-  '-1002002':"Invalid App Secret.",
+  '-1002002': "Invalid App Secret.",
+  '-500':
+    'Unexpected attester node program failure.',
+  '-10100': 'Task cannot be executed again due to unexpected failure.',
+  '-10101': 'This task has already been completed. No need to resubmit.',
+  '-10102':
+    'This task is still in progress. No need to resubmit.',
+  '-10103':
+    'Submission limit reached for this task. Initiate a new task to continue.',
+  '-10104': 'Failed to get task details. Please check the attester node condition or task ID.',
+  '-10105': 'Invalid attestation parameters. Please check the connection between the node and the template server.',
+  '-10106':
+    'Attestation template ID mismatch between task and attester node.',
+  '-10107':
+    'The user wallet address provided during attestation mismatch with submission.',
+  '-10108':
+    'Invalid task ID. Please ensure the submitted ID matches the task.',
+  '-10109':
+    'Task cannot be executed again. Please check your task fees.',
+  '-10110':
+    'Attester node mismatch. Ensure the node matches the task specification and resubmit.',
+  '-10111': 'Task submitted past the allowed time limit (15 minutes).',
 }
 
