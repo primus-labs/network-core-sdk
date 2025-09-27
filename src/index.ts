@@ -149,6 +149,8 @@ class PrimusNetwork {
             if (balanceGreaterThanBaseValue === 'true' && signature) {
               const encodedDataObj = JSON.parse(encodedData);
               encodedDataObj.attestation = JSON.parse(encodedDataObj.attestation);
+              encodedDataObj.attestationTime = submitTime;
+              encodedDataObj.attestorUrl = api;
               attArr.push(encodedDataObj);
             } else if (!signature || balanceGreaterThanBaseValue === 'false') {
               let errorCode;
