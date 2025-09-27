@@ -44,7 +44,7 @@ class Contract {
         // console.time('txreceiptTimeInSdk');
         const txReceipt = await tx.wait();
         // console.timeEnd('txreceiptTimeInSdk');
-        console.log("txreceipt", txReceipt);
+        // console.log("txreceipt", txReceipt);
         // resolve(tx.hash);
         resolve(txReceipt);
       } catch (error: any) {

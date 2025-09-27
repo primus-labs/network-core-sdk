@@ -42,20 +42,20 @@ class PrimusNetwork {
 
         const network = await formatProvider.getNetwork();
         const providerChainId = network.chainId;
-        console.log('init provider', provider, network)
-        console.log('init providerChainId', providerChainId, chainId)
+        // console.log('init provider', provider, network)
+        // console.log('init providerChainId', providerChainId, chainId)
         if (providerChainId !== chainId) {
           return reject(`Please connect to the chain with ID ${chainId} first.`)
         }
 
         this.provider = signer ?? formatProvider;
         this.chainId = chainId;
-        console.log('init chainId', this.chainId);
+        // console.log('init chainId', this.chainId);
         await init(mode);
         const activeChainInfo = SUPPORTEDCHAINIDSMAP[chainId as keyof typeof SUPPORTEDCHAINIDSMAP]
         this._taskContract = new TaskContract(this.provider, activeChainInfo.taskContractAddress);
         this._nodeContract = new NodeContract(this.provider, activeChainInfo.nodeContractAddress);
-        console.log('init _nodeContract', this._nodeContract);
+        // console.log('init _nodeContract', this._nodeContract);
         return resolve(true);
       } catch (error) {
         return reject(error);
@@ -73,7 +73,7 @@ class PrimusNetwork {
           attestorCount: 1
         }
         const submitTaskRes = await this._submitTask(submitTaskParams)
-        console.log('submitTask done', submitTaskRes)
+        // console.log('submitTask done', submitTaskRes)
         return resolve(submitTaskRes)
       } catch (error) {
         let formatErr = formatErrFn(error);
@@ -112,7 +112,7 @@ class PrimusNetwork {
         // 1.get attestors info
         const attestorsInfoArr = await Promise.all(attestorIds.map((id: string) => this._nodeContract?.getNodeInfo(id)))
         const attestorsUrlsArr = attestorsInfoArr.map((info: any) => info.urls)// [['api1', 'api2'], ['api2', 'api4']]
-        console.log('getNodesInfo done', attestorsInfoArr)
+        // console.log('getNodesInfo done', attestorsInfoArr)
         // 2.Select the fastest URL for each selected node through speed testing.
         const attestorsUrlArr = await Promise.all(attestorsUrlsArr.map((attestorUrls) => findFastestWs(attestorUrls)))
         console.log('testSpeed done', attestorsUrlArr)
@@ -132,14 +132,17 @@ class PrimusNetwork {
             extendedParams: JSON.stringify(extendedParamsObj)
           }
           const attestationParams = assemblyParams(formatAttParams);
-          console.log('------------------------------------------------attestationParams', attestationParams)
+          const submitStartTime = Date.now();
           const getAttestationRes = await getAttestation(attestationParams);
-          console.log('getAttestation:', getAttestationRes);
+          // console.log('getAttestation:', getAttestationRes);
           if (getAttestationRes.retcode !== "0") {
             return reject(new ZkAttestationError('00001'))
           }
           const res: any = await getAttestationResult();
-          console.log('getAttestationResult:', res);
+          const submitEndTime = Date.now();
+          const submitTime = submitEndTime - submitStartTime;
+          console.log('----------Attest algorithm duration:', submitTime);
+          // console.log('getAttestationResult:', res);
           const { retcode, content, details } = res
           if (retcode === '0') {
             const { balanceGreaterThanBaseValue, signature, encodedData, extraData } = content
@@ -167,7 +170,7 @@ class PrimusNetwork {
             return reject(new ZkAttestationError(code, '', res))
           }
         }
-        console.log('attestationList from algorithm', attArr);
+        // console.log('attestationList from algorithm', attArr);
         return resolve(attArr);
       } catch (error) {
         return reject(error);
@@ -264,7 +267,7 @@ class PrimusNetwork {
         if (!this._taskContract) throw new Error('Task contract is not initialized');
         const rawDetail = await this._taskContract.queryTask(taskId, blockNumber);
         const detailObj = resultToObject(rawDetail);
-        console.log(`[verifyAndPollTaskResult] Task ${taskId} status: ${detailObj.taskStatus}`, detailObj);
+        // console.log(`[verifyAndPollTaskResult] Task ${taskId} status: ${detailObj.taskStatus}`, detailObj);
         const { taskStatus = TaskStatus.INIT, taskResults = [] } = detailObj;
         return { taskStatus, taskResults };
       };
