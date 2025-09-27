@@ -126,9 +126,7 @@ describe('PrimusNetwork', () => {
 
         const taskResult = await primusNetwork.verifyAndPollTaskResult({
           taskId: attestResult[0].taskId,
-          reportTxHash: attestResult[0].reportTxHash,
-          intervalMs: 2000,
-          timeoutMs: 60000
+          reportTxHash: attestResult[0].reportTxHash
         });
         expect(Array.isArray(taskResult)).toBe(true);
         console.log('Task result:', taskResult);

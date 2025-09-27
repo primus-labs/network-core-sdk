@@ -228,8 +228,8 @@ class PrimusNetwork {
   async verifyAndPollTaskResult({ taskId, reportTxHash, intervalMs = 2000, timeoutMs = ONEMINUTE }: {
     taskId: string,
     reportTxHash?: string,
-    intervalMs: number,
-    timeoutMs: number
+    intervalMs?: number,
+    timeoutMs?: number
   }
   ): Promise<TaskResult[]> {
     const maxAttempts = timeoutMs / intervalMs;
