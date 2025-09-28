@@ -33,25 +33,27 @@ class Contract {
     });
   }
   // Example method to send a transaction
-  async sendTransaction(functionName: string, functionParams: any[]): Promise<ContractReceipt> {
-    return new Promise(async (resolve, reject) => {
-      if (!this.contractInstance[functionName]) {
-        return reject(`Method ${functionName} does not exist on the contract`)
-      }
-      try {
-        console.log('sendTransaction params:', functionName, ...functionParams)
-        const tx = await this.contractInstance[functionName](...functionParams);
-        // console.time('txreceiptTimeInSdk');
-        const txReceipt = await tx.wait();
-        // console.timeEnd('txreceiptTimeInSdk');
-        // console.log("txreceipt", txReceipt);
-        // resolve(tx.hash);
-        resolve(txReceipt);
-      } catch (error: any) {
-        console.log("sendTransaction error:", error);
-        return reject(error)
-      }
-    });
+  async sendTransaction(functionName: string, functionParams: unknown[]): Promise<ContractReceipt> {
+    if (!this.contractInstance[functionName]) {
+      throw new Error(`Method ${functionName} does not exist on the contract`);
+    }
+
+    try {
+      // eslint-disable-next-line no-console
+      console.log('sendTransaction params:', functionName, ...functionParams);
+
+      const tx = await this.contractInstance[functionName](...functionParams);
+      // console.time('txreceiptTimeInSdk');
+      const txReceipt = await tx.wait();
+      // console.timeEnd('txreceiptTimeInSdk');
+      // console.log("txreceipt", txReceipt);
+      // resolve(tx.hash);
+      return txReceipt;
+    } catch (error: unknown) {
+      // eslint-disable-next-line no-console
+      console.log('sendTransaction error:', error);
+      throw error;
+    }
   }
 }
 

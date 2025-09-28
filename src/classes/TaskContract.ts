@@ -19,7 +19,9 @@ class TaskContract {
         const feeRes = await this.queryLatestFeeInfo(tokenSymbol);
         const { attestorFee, primusFee } = feeRes;
         const totalFee = attestorFee.add(primusFee).mul(BigNumber.from(attestorCount))
-        const params = [address, templateId, attestorCount, tokenSymbol, callbackAddress, { value: totalFee }];
+        // Get current gas price
+        const gasPrice = await this.contractInstance.provider.getGasPrice();
+        const params = [address, templateId, attestorCount, tokenSymbol, callbackAddress, { value: totalFee, gasPrice: gasPrice }];
         const result = await this.contractInstance.sendTransaction('submitTask', params)
         resolve(result);
       } catch (error) {
