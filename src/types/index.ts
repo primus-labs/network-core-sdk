@@ -53,6 +53,8 @@ export type SeniorAttestationParams = {
   computeMode?: ComputeMode;
   extendedParams?: string;
   sslCipher?: AttSslCipher;
+  noProxy?: boolean;
+  specialTask?: string;
 }
 
 export type AttestCommonParams = PrimaryAttestationParams & SeniorAttestationParams;
@@ -168,7 +170,7 @@ export type FeeInfo = {
 }
 
 export type AttNetworkOneUrlResponseResolve = {
-  oneUrlResponseResolve: AttNetworkResponseResolve[] ;
+  oneUrlResponseResolve: AttNetworkResponseResolve[];
 }
 
 export type AttestAfterSubmitTaskParams = AttestCommonParams & SubmitTaskReturnParams & {

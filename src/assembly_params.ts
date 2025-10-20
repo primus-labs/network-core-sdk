@@ -2,7 +2,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { AttNetworkRequest, AttNetworkResponseResolve, GenerateAttestationParams } from './types/index';
 
 export function assemblyParams(att: GenerateAttestationParams) {
-    const { requests, responseResolves, sslCipher, algoDomain, attMode, address: userAddress, additionParams, extendedParams, backUrl } = att;
+    const { requests, responseResolves, sslCipher, algoDomain, 
+      attMode, address: userAddress, additionParams, extendedParams, backUrl, 
+      noProxy, specialTask } = att;
     const attRequest = {
         userAddress,
         additionParams,
@@ -19,9 +21,13 @@ export function assemblyParams(att: GenerateAttestationParams) {
     if (attMode?.algorithmType === "mpctls") {
         padoUrl = primusMpcUrl;
         modelType = "mpctls"
+        if (noProxy) {
+          proxyUrl = ""; // only supported under mpctls model
+        }
     }
     let timestamp = (+ new Date()).toString();
     const attestationParams = {
+        specialTask, // undefined/PartialHttpResponseCiphertext/CompleteHttpResponseCiphertext
         source: "source", // not empty
         requestid,
         padoUrl,
