@@ -9,7 +9,8 @@ export type AttNetworkRequest = {
 export type AttNetworkResponseResolve = {
   keyName: string,
   parseType: string, //json or html
-  parsePath: string
+  parsePath: string,
+  op?: string,
 }
 export type Attestor = {
   attestorAddr: string,
@@ -55,6 +56,7 @@ export type SeniorAttestationParams = {
   sslCipher?: AttSslCipher;
   noProxy?: boolean;
   specialTask?: string;
+  getAllJsonResponse?: string;
 }
 
 export type AttestCommonParams = PrimaryAttestationParams & SeniorAttestationParams;

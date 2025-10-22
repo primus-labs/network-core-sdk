@@ -76,7 +76,6 @@ export const init = async (mode: AlgorithmBackend = 'auto') => {
 
 
 export const getAttestation = async (paramsObj: any) => {
-
   const _paramsObj = { method: "getAttestation", version: "1.1.1", params: paramsObj };
   const params = JSON.stringify(_paramsObj);
   const result = await callAlgorithm(params);

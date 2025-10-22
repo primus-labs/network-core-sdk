@@ -18,6 +18,7 @@ class PrimusNetwork {
   private _taskContract: TaskContract | undefined;
   private _nodeContract: NodeContract | undefined;
   private _extendedData: Record<string, any> = {};
+  private _allJsonResponse: Record<string, any> = {};
 
   async init(provider: any, chainId: number, mode: AlgorithmBackend = 'auto') {
     return new Promise(async (resolve, reject) => {
@@ -147,16 +148,19 @@ class PrimusNetwork {
           // console.log('getAttestationResult:', res);
           const { retcode, content, details } = res
           if (retcode === '0') {
-            const { balanceGreaterThanBaseValue, signature, encodedData, extraData, extendedData } = content
+            const { balanceGreaterThanBaseValue, signature, encodedData, extraData, extendedData, allJsonResponse } = content
             if (balanceGreaterThanBaseValue === 'true' && signature) {
               const encodedDataObj = JSON.parse(encodedData);
               encodedDataObj.attestation = JSON.parse(encodedDataObj.attestation);
               encodedDataObj.attestationTime = submitTime;
               encodedDataObj.attestorUrl = api;
               attArr.push(encodedDataObj);
-              
+
               if (attestationParams.specialTask) {
-                  this._extendedData[taskId] = extendedData;
+                this._extendedData[taskId] = extendedData;
+              }
+              if (attestationParams.getAllJsonResponse === "true") {
+                this._allJsonResponse[taskId] = allJsonResponse;
               }
             } else if (!signature || balanceGreaterThanBaseValue === 'false') {
               let errorCode;
@@ -190,34 +194,36 @@ class PrimusNetwork {
     return this._extendedData[taskId];
   }
 
-  getAesKey(taskId: string): string | undefined {
-  try {
-      const extentedData = this._extendedData[taskId];
-    if (!extentedData || (typeof extentedData === 'object' && Object.keys(extentedData).length === 0)) {
-      console.warn("No extended data provided or it's empty");
-      return undefined;
-    }
-
-    const ciphertext = typeof extentedData === 'string'
-      ? JSON.parse(extentedData)
-      : extentedData;
-
-    const p = ciphertext.CompleteHttpResponseCiphertext 
-           ?? ciphertext.PartialHttpResponseCiphertext;
-
-    if (!p) {
-      console.warn("No ciphertext found in extended data");
-      return undefined;
-    }
-
-    const po = JSON.parse(p);
-
-    return po?.packets?.[0]?.aes_key;
-  } catch (err) {
-    console.error("Failed to parse extended data:", (err as Error).message);
-    return undefined;
+  getAllJsonResponse(taskId: string): string | undefined {
+    return this._allJsonResponse[taskId];
   }
-}
+
+  getAesKey(taskId: string): string | undefined {
+    try {
+      const extendedData = this._extendedData[taskId];
+      if (typeof extendedData !== 'string' || extendedData.trim() === '') {
+        console.warn("No extended data provided or it's empty");
+        return undefined;
+      }
+
+      const ciphertext = JSON.parse(extendedData);
+
+      const p = ciphertext.CompleteHttpResponseCiphertext
+        ?? ciphertext.PartialHttpResponseCiphertext;
+
+      if (!p) {
+        console.warn("No ciphertext found in extended data");
+        return undefined;
+      }
+
+      const po = JSON.parse(p);
+
+      return po?.packets?.[0]?.aes_key;
+    } catch (err) {
+      console.error("Failed to parse extended data:", (err as Error).message);
+      return undefined;
+    }
+  }
 
   async getReportTxReceipt(reportTxHash: string, confirmations: number = 1, timeoutMs: number = ONEMINUTE) {
     const hasWait = (this.provider as any)?.waitForTransaction;
