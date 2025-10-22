@@ -11,4 +11,5 @@ npm install
 ## test
 
 ```sh
-npm run test
+npm run test [-- test/xxxx.text.ts]
+```
