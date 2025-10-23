@@ -71,7 +71,20 @@ function assemblyRequest(requests: AttNetworkRequest[]) {
   });
 }
 
-function _getFiledType(op?: string) {
+
+function _getField(parsePath: string, op?: string) {
+  if (op === "SHA256_EX") {
+    return { "type": "FIELD_ARITHMETIC", "op": "SHA256", "field": parsePath };
+  }
+  return parsePath;
+}
+function _getOp(op?: string) {
+  if (op === "SHA256_EX") {
+    return "REVEAL_HEX_STRING";
+  }
+  return op ?? 'REVEAL_STRING';
+}
+function _getType(op?: string) {
   if (['>', '>=', '=', '!=', '<', '<=', 'STREQ', 'STRNEQ'].includes(op ?? "")) {
     return 'FIELD_RANGE';
   } else if (op === 'SHA256') {
@@ -83,10 +96,10 @@ function _getFiledType(op?: string) {
 function assemblyResponse(responseResolves: AttNetworkResponseResolve[][]) {
   return responseResolves.map(subArr => {
     const subconditions = subArr.map(({ keyName, parsePath, op }) => ({
-      field: parsePath,
+      field: _getField(parsePath, op),
       reveal_id: keyName,
-      op: op ?? 'REVEAL_STRING',
-      type: _getFiledType(op)
+      op: _getOp(op),
+      type: _getType(op)
     }));
     return {
       conditions: {

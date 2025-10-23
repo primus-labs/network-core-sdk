@@ -85,7 +85,7 @@ describe('PrimusNetwork', () => {
               keyName: "1",
               parseType: "json",
               parsePath: "$",
-              op: "SHA256"
+              op: "SHA256_EX"
             }
           ],
           [
@@ -93,7 +93,7 @@ describe('PrimusNetwork', () => {
               keyName: "2",
               parseType: "json",
               parsePath: "$",
-              op: "SHA256"
+              op: "SHA256_EX"
             }
           ]
         ];

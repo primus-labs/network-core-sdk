@@ -134,6 +134,18 @@ class PrimusNetwork {
             extendedParams: JSON.stringify(extendedParamsObj)
           }
           const attestationParams = assemblyParams(formatAttParams);
+          let responseIds: string[] = [];
+          if (attestationParams.getAllJsonResponse === "true") {
+            const { responseResolves } = attParams;
+            responseIds = responseResolves
+              .flatMap(inner => inner)
+              .filter(item => item.op === "SHA256_EX" && item.parsePath === "$")
+              .map(item => item.keyName);
+            // console.log('responseIds', responseIds);
+            if (responseIds.length != responseResolves.length) {
+              return reject(new ZkAttestationError('00015'))
+            }
+          }
           const submitStartTime = Date.now();
           const getAttestationRes = await getAttestation(attestationParams);
           // console.log('getAttestation:', getAttestationRes);
@@ -160,7 +172,7 @@ class PrimusNetwork {
                 this._extendedData[taskId] = extendedData;
               }
               if (attestationParams.getAllJsonResponse === "true") {
-                this._allJsonResponse[taskId] = allJsonResponse;
+                this._allJsonResponse[taskId] = responseIds.map((id, i) => ({ id, content: allJsonResponse[i] }));
               }
             } else if (!signature || balanceGreaterThanBaseValue === 'false') {
               let errorCode;
