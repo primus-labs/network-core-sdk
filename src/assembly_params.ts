@@ -21,7 +21,7 @@ export function assemblyParams(att: GenerateAttestationParams) {
   if (attMode?.algorithmType === "mpctls") {
     padoUrl = primusMpcUrl;
     modelType = "mpctls"
-    if (noProxy) {
+    if (noProxy || noProxy === undefined) {
       proxyUrl = ""; // only supported under mpctls model
     }
   }
