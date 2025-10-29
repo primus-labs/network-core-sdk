@@ -95,11 +95,12 @@ function _getType(op?: string) {
 
 function assemblyResponse(responseResolves: AttNetworkResponseResolve[][]) {
   return responseResolves.map(subArr => {
-    const subconditions = subArr.map(({ keyName, parsePath, op }) => ({
+    const subconditions = subArr.map(({ keyName, parsePath, op, value }) => ({
       field: _getField(parsePath, op),
       reveal_id: keyName,
       op: _getOp(op),
-      type: _getType(op)
+      type: _getType(op),
+      value
     }));
     return {
       conditions: {

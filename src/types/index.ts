@@ -11,6 +11,7 @@ export type AttNetworkResponseResolve = {
   parseType: string, //json or html
   parsePath: string,
   op?: string,
+  value?: string | number
 }
 export type Attestor = {
   attestorAddr: string,

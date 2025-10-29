@@ -137,10 +137,9 @@ class PrimusNetwork {
           let responseIds: string[] = [];
           if (attestationParams.getAllJsonResponse === "true") {
             const { responseResolves } = attParams;
-            responseIds = responseResolves
-              .flatMap(inner => inner)
-              .filter(item => item.op === "SHA256_EX" && item.parsePath === "$")
-              .map(item => item.keyName);
+            for (const responseResolve of responseResolves) {
+              responseIds.push(responseResolve[0].keyName)
+            }
             // console.log('responseIds', responseIds);
             if (responseIds.length != responseResolves.length) {
               return reject(new ZkAttestationError('00015'))
