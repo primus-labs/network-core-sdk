@@ -106,7 +106,7 @@ class PrimusNetwork {
     })
   }
 
-  async attest(attestParams: AttestAfterSubmitTaskParams): Promise<RawAttestationResultList> {
+  async attest(attestParams: AttestAfterSubmitTaskParams, timeout: number = 2 * ONEMINUTE): Promise<RawAttestationResultList> {
     return new Promise(async (resolve, reject) => {
       try {
         const { taskId, taskTxHash, taskAttestors: attestorIds, ...attParams } = attestParams
@@ -151,7 +151,7 @@ class PrimusNetwork {
           if (getAttestationRes.retcode !== "0") {
             return reject(new ZkAttestationError('00001'))
           }
-          const res: any = await getAttestationResult();
+          const res: any = await getAttestationResult(timeout);
           // console.log('getAttestationResult:', JSON.stringify(res));
           const submitEndTime = Date.now();
           const submitTime = submitEndTime - submitStartTime;
