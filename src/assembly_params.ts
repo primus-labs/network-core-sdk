@@ -4,7 +4,7 @@ import { AttNetworkRequest, AttNetworkResponseResolve, GenerateAttestationParams
 export function assemblyParams(att: GenerateAttestationParams) {
   const { requests, responseResolves, sslCipher, algoDomain,
     attMode, address: userAddress, additionParams, extendedParams, backUrl,
-    noProxy, specialTask, getAllJsonResponse } = att;
+    noProxy, specialTask, getAllJsonResponse, mTLS } = att;
   const attRequest = {
     userAddress,
     additionParams,
@@ -55,6 +55,8 @@ export function assemblyParams(att: GenerateAttestationParams) {
     padoExtensionVersion: "0.3.21",
     cipher: sslCipher ? sslCipher : "ECDHE-RSA-AES128-GCM-SHA256",
     getAllJsonResponse, // "false"(default) or "true"
+    client_crt: mTLS ? mTLS.clientCrt : "",
+    client_key: mTLS ? mTLS.clientKey : "",
   };
   return attestationParams;
 }

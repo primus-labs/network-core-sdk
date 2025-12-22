@@ -47,6 +47,12 @@ export type PrimaryAttestationParams = {
 export type BaseAttestationParams = {
   userAddress: string;
 }
+
+export type MTLSParams = {
+  clientCrt: string;
+  clientKey: string;
+}
+
 export type SeniorAttestationParams = {
   additionParams?: string;
   attMode?: AttMode;
@@ -58,6 +64,7 @@ export type SeniorAttestationParams = {
   noProxy?: boolean;
   specialTask?: string;
   getAllJsonResponse?: string;
+  mTLS?: MTLSParams
 }
 
 export type AttestCommonParams = PrimaryAttestationParams & SeniorAttestationParams;
