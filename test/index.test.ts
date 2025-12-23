@@ -113,11 +113,16 @@ describe('PrimusNetwork', () => {
         ];
 
         // Compose params for attest
+        // const mTLS = {
+        //   clientCrt: "clientCrtString",
+        //   clientKey: "clientKeyString",
+        // }
         const attestParams2 = {
             ...attestParams,
             ...submitResult,
             requests,
-            responseResolves
+            responseResolves,
+            // mTLS
         };
 
         let attestResult = await primusNetwork.attest(attestParams2);

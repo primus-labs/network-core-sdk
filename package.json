@@ -1,6 +1,6 @@
 {
   "name": "@primuslabs/network-core-sdk",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "author": "Primus Labs <dev@primuslabs.org>",
   "description": "Primus network zkTLS core sdk",
   "repository": {
