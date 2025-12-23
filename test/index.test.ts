@@ -114,8 +114,8 @@ describe('PrimusNetwork', () => {
 
         // Compose params for attest
         // const mTLS = {
-        //   clientCrt: "clientCrtString",
-        //   clientKey: "clientKeyString",
+        //   clientCrt: "YourClientCrtString", // Please replace with your ownner client crt string
+        //   clientKey: "YourClientKeyString", // Please replace with your ownner client key string
         // }
         const attestParams2 = {
             ...attestParams,
