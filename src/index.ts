@@ -126,6 +126,7 @@ class PrimusNetwork {
     responseIds: string[],
     timeout: number,
     taskId: string
+  // @ts-ignore TS2366: All code paths throw or return, but TypeScript cannot infer this
   ): Promise<{
     encodedDataObj: any;
     extendedData?: string;
@@ -147,7 +148,7 @@ class PrimusNetwork {
       const getAttestationRes = await getAttestation(attestationParams);
       // console.log('getAttestation:', getAttestationRes);
       if (getAttestationRes.retcode !== "0") {
-        const errorCode = getAttestationRes.retcode === '2' ? '00001' : '00000';
+        const errorCode: AttestationErrorCode = getAttestationRes.retcode === '2' ? '00001' : '00000';
         await eventReport({
           ...eventReportBaseParams,
           status: "FAILED",
@@ -228,7 +229,7 @@ class PrimusNetwork {
         })
         throw new ZkAttestationError(code, '', res)
       }
-    } catch (e) {
+    } catch (e:any) {
       if (e?.code === 'timeout') {
         await eventReport({
           ...eventReportBaseParams,
@@ -241,7 +242,7 @@ class PrimusNetwork {
             getAttestationResultRes: JSON.stringify(e?.data)
           }
         })
-        throw new ZkAttestationError('00002', '', e?.data))
+        throw new ZkAttestationError('00002', '', e?.data)
       } else {
         throw e;
       }

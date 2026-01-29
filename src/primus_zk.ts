@@ -20,20 +20,54 @@ async function initAlgorithm(mode: AlgorithmBackend = 'auto'): Promise<(params: 
     try {
       const Module = require('./algorithm/client_plugin.js');
       return new Promise((resolve, reject) => {
-        Module.onRuntimeInitialized = () => {
+        let resolved = false;
+        let timeoutId: NodeJS.Timeout | null = null;
+
+        const checkAndResolve = () => {
+          if (resolved) return;
           try {
-            const Module_callAlgorithm = Module.cwrap('callAlgorithm', 'string', ['string']);
-            console.log('[info] WASM module initialized.');
-            resolve(async (params: string) => Module_callAlgorithm(params));
+            if (Module.cwrap && typeof Module.cwrap === 'function') {
+              const Module_callAlgorithm = Module.cwrap('callAlgorithm', 'string', ['string']);
+              console.log('[info] WASM module initialized.');
+              resolved = true;
+              if (timeoutId) clearTimeout(timeoutId);
+              resolve(async (params: string) => Module_callAlgorithm(params));
+              return true;
+            }
           } catch (e) {
             console.error('[error] cwrap failed:', e);
+            resolved = true;
+            if (timeoutId) clearTimeout(timeoutId);
             reject(e);
+            return true;
           }
+          return false;
         };
 
-        setTimeout(() => {
-          reject(new Error('WASM module initialization timeout.'));
-        }, 5000); // e.g. 5s
+        // Check immediately
+        if (checkAndResolve()) {
+          return;
+        }
+
+        // Set up callback for async initialization
+        Module.onRuntimeInitialized = () => {
+          checkAndResolve();
+        };
+
+        // Also poll periodically in case callback doesn't fire
+        const pollInterval = setInterval(() => {
+          if (checkAndResolve()) {
+            clearInterval(pollInterval);
+          }
+        }, 100);
+
+        timeoutId = setTimeout(() => {
+          if (!resolved) {
+            resolved = true;
+            clearInterval(pollInterval);
+            reject(new Error('WASM module initialization timeout.'));
+          }
+        }, 10000); // Increase timeout to 10s
       });
     } catch (e) {
       console.error('[error] WASM module load failed:', e);

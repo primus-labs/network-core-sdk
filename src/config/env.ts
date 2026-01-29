@@ -20,8 +20,3 @@ export const PRIMUS_MPC_URL = pEnvMap[pEnv].PRIMUS_MPC_URL
 export const PROXY_URL = pEnvMap[pEnv].PROXY_URL
 export const BASE_SERVICE_URL = pEnvMap[pEnv].BASE_SERVICE_URL
 
-export const BASEAPIMAP = {
-  development: 'https://api-dev.padolabs.org',
-  production: 'https://api.padolabs.org',
-};
-export const BASEAPI = BASEAPIMAP[pEnv]
