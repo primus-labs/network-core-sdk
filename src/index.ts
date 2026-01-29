@@ -9,6 +9,10 @@ import { TaskStatus, TaskResult, SubmitTaskReturnParams, AttestAfterSubmitTaskPa
 import { SDK_VERSION } from './version';
 import { ZkAttestationError } from './classes/Error';
 import { AttestationErrorCode } from 'config/error';
+import { eventReport,getDeviceId } from './utils/utils'
+import type { ClientType } from './api/index.d';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const packageJson = require('../package.json') as { name: string; version: string };
 
 class PrimusNetwork {
   private provider!: ethers.providers.Web3Provider | ethers.providers.JsonRpcProvider | ethers.providers.JsonRpcSigner;
@@ -106,6 +110,144 @@ class PrimusNetwork {
     })
   }
 
+  /**
+   * Process attestation for a single attestor
+   * @param api - The API URL of the attestor
+   * @param attestationParams - Assembled attestation parameters
+   * @param responseIds - Response IDs array (used when getAllJsonResponse is true)
+   * @param timeout - Timeout duration
+   * @param taskId - Task ID (for storing extended data)
+   * @returns Returns the attestation result object
+   * @throws ZkAttestationError Throws error when attestation fails
+   */
+  private async _processSingleAttestation(
+    api: string,
+    attestationParams: any,
+    responseIds: string[],
+    timeout: number,
+    taskId: string
+  ): Promise<{
+    encodedDataObj: any;
+    extendedData?: string;
+    allJsonResponse?: any[];
+    responseIds?: string[];
+    attestationParams: any;
+  }> {
+    const appId = await getDeviceId()
+    const eventReportBaseParams = {
+      source: "",
+      clientType: packageJson.name as ClientType,
+      appId,
+      templateId: "",
+      address: attestationParams.address,
+      ext: {}
+    }
+    try { 
+      const submitStartTime = Date.now();
+      const getAttestationRes = await getAttestation(attestationParams);
+      // console.log('getAttestation:', getAttestationRes);
+      if (getAttestationRes.retcode !== "0") {
+        const errorCode = getAttestationRes.retcode === '2' ? '00001' : '00000';
+        await eventReport({
+          ...eventReportBaseParams,
+          status: "FAILED",
+          detail: {
+            code: errorCode,
+            desc: ""
+          },
+        })
+        throw new ZkAttestationError(errorCode)
+      }
+      const res: any = await getAttestationResult(timeout);
+      // console.log('getAttestationResult:', JSON.stringify(res));
+      const submitEndTime = Date.now();
+      const submitTime = submitEndTime - submitStartTime;
+      console.log('----------Attest algorithm duration:', submitTime);
+      // console.log('getAttestationResult:', res);
+      const { retcode, content, details } = res
+      if (retcode === '0') {
+        const { balanceGreaterThanBaseValue, signature, encodedData, extraData, extendedData, allJsonResponse } = content
+        if (balanceGreaterThanBaseValue === 'true' && signature) {
+          const encodedDataObj = JSON.parse(encodedData);
+          encodedDataObj.attestation = JSON.parse(encodedDataObj.attestation);
+          encodedDataObj.attestationTime = submitTime;
+          encodedDataObj.attestorUrl = api;
+          
+          const result: any = {
+            encodedDataObj,
+            attestationParams
+          };
+
+          if (attestationParams.specialTask) {
+            this._extendedData[taskId] = extendedData;
+            result.extendedData = extendedData;
+          }
+          if (attestationParams.getAllJsonResponse === "true") {
+            const allJsonResponseData = responseIds.map((id, i) => ({ id, content: allJsonResponse[i] }));
+            this._allJsonResponse[taskId] = allJsonResponseData;
+            result.allJsonResponse = allJsonResponseData;
+            result.responseIds = responseIds;
+          }
+          await eventReport({
+            ...eventReportBaseParams,
+            status: "SUCCESS",
+          })
+          return result;
+        } else if (!signature || balanceGreaterThanBaseValue === 'false') {
+          let errorCode;
+          if (
+            extraData &&
+            JSON.parse(extraData) &&
+            ['-1200010', '-1002001', '-1002002'].includes(
+              JSON.parse(extraData).errorCode + ''
+            )
+          ) {
+            errorCode = JSON.parse(extraData).errorCode + '';
+          } else {
+            errorCode = '00104';
+          }
+          await eventReport({
+            ...eventReportBaseParams,
+            status: "FAILED",
+            detail: {
+              code: errorCode,
+              desc: ""
+            },
+          })
+          throw new ZkAttestationError(errorCode as AttestationErrorCode, '', res)
+        }
+      } else if (retcode === '2') {
+        const { errlog: { code } } = details;
+        await eventReport({
+          ...eventReportBaseParams,
+          status: "FAILED",
+          detail: {
+            code,
+            desc: ""
+          },
+        })
+        throw new ZkAttestationError(code, '', res)
+      }
+    } catch (e) {
+      if (e?.code === 'timeout') {
+        await eventReport({
+          ...eventReportBaseParams,
+          status: "FAILED",
+          detail: {
+            code: '00002',
+            desc: ""
+          },
+          ext: {
+            getAttestationResultRes: JSON.stringify(e?.data)
+          }
+        })
+        throw new ZkAttestationError('00002', '', e?.data))
+      } else {
+        throw e;
+      }
+    }
+  }
+
   async attest(attestParams: AttestAfterSubmitTaskParams, timeout: number = 2 * ONEMINUTE): Promise<RawAttestationResultList> {
     return new Promise(async (resolve, reject) => {
       try {
@@ -122,75 +264,36 @@ class PrimusNetwork {
         let attArr: RawAttestationResultList = []
 
         for (const api of attestorsUrlArr) {
-          let extendedParamsObj = attParams.extendedParams ? JSON.parse(attParams.extendedParams) : {}
-          Object.assign(extendedParamsObj, {
-            taskId, taskTxHash, chainId: this.chainId,
-            primusNetworkCoreSdkVersion: SDK_VERSION,
-          })
+          try {
+            // Assemble attestation parameters for each attestor
+            let extendedParamsObj = attParams.extendedParams ? JSON.parse(attParams.extendedParams) : {}
+            Object.assign(extendedParamsObj, {
+              taskId, taskTxHash, chainId: this.chainId,
+              primusNetworkCoreSdkVersion: SDK_VERSION,
+            })
 
-          let formatAttParams = {
-            ...attParams,
-            algoDomain: api,
-            extendedParams: JSON.stringify(extendedParamsObj)
-          }
-          const attestationParams = assemblyParams(formatAttParams);
-          let responseIds: string[] = [];
-          if (attestationParams.getAllJsonResponse === "true") {
-            const { responseResolves } = attParams;
-            for (const responseResolve of responseResolves) {
-              responseIds.push(responseResolve[0].keyName)
+            let formatAttParams = {
+              ...attParams,
+              algoDomain: api,
+              extendedParams: JSON.stringify(extendedParamsObj)
             }
-            // console.log('responseIds', responseIds);
-            if (responseIds.length != responseResolves.length) {
-              return reject(new ZkAttestationError('00015'))
+            const attestationParams = assemblyParams(formatAttParams);
+            let responseIds: string[] = [];
+            if (attestationParams.getAllJsonResponse === "true") {
+              const { responseResolves } = attParams;
+              for (const responseResolve of responseResolves) {
+                responseIds.push(responseResolve[0].keyName)
+              }
+              // console.log('responseIds', responseIds);
+              if (responseIds.length != responseResolves.length) {
+                return reject(new ZkAttestationError('00015'))
+              }
             }
-          }
-          const submitStartTime = Date.now();
-          const getAttestationRes = await getAttestation(attestationParams);
-          // console.log('getAttestation:', getAttestationRes);
-          if (getAttestationRes.retcode !== "0") {
-            return reject(new ZkAttestationError('00001'))
-          }
-          const res: any = await getAttestationResult(timeout);
-          // console.log('getAttestationResult:', JSON.stringify(res));
-          const submitEndTime = Date.now();
-          const submitTime = submitEndTime - submitStartTime;
-          console.log('----------Attest algorithm duration:', submitTime);
-          // console.log('getAttestationResult:', res);
-          const { retcode, content, details } = res
-          if (retcode === '0') {
-            const { balanceGreaterThanBaseValue, signature, encodedData, extraData, extendedData, allJsonResponse } = content
-            if (balanceGreaterThanBaseValue === 'true' && signature) {
-              const encodedDataObj = JSON.parse(encodedData);
-              encodedDataObj.attestation = JSON.parse(encodedDataObj.attestation);
-              encodedDataObj.attestationTime = submitTime;
-              encodedDataObj.attestorUrl = api;
-              attArr.push(encodedDataObj);
 
-              if (attestationParams.specialTask) {
-                this._extendedData[taskId] = extendedData;
-              }
-              if (attestationParams.getAllJsonResponse === "true") {
-                this._allJsonResponse[taskId] = responseIds.map((id, i) => ({ id, content: allJsonResponse[i] }));
-              }
-            } else if (!signature || balanceGreaterThanBaseValue === 'false') {
-              let errorCode;
-              if (
-                extraData &&
-                JSON.parse(extraData) &&
-                ['-1200010', '-1002001', '-1002002'].includes(
-                  JSON.parse(extraData).errorCode + ''
-                )
-              ) {
-                errorCode = JSON.parse(extraData).errorCode + '';
-              } else {
-                errorCode = '00104';
-              }
-              return reject(new ZkAttestationError(errorCode as AttestationErrorCode, '', res))
-            }
-          } else if (retcode === '2') {
-            const { errlog: { code } } = details;
-            return reject(new ZkAttestationError(code, '', res))
+            const result = await this._processSingleAttestation(api, attestationParams, responseIds, timeout, taskId);
+            attArr.push(result.encodedDataObj);
+          } catch (error) {
+            return reject(error);
           }
         }
         // console.log('attestationList from algorithm', attArr);
