@@ -19,6 +19,7 @@ class PrimusNetwork {
   private _nodeContract: NodeContract | undefined;
   private _extendedData: Record<string, any> = {};
   private _allJsonResponse: Record<string, any> = {};
+  private _allPlainResponse: Record<string, any> = {};
 
   async init(provider: any, chainId: number, mode: AlgorithmBackend = 'auto') {
     return new Promise(async (resolve, reject) => {
@@ -159,7 +160,7 @@ class PrimusNetwork {
           // console.log('getAttestationResult:', res);
           const { retcode, content, details } = res
           if (retcode === '0') {
-            const { balanceGreaterThanBaseValue, signature, encodedData, extraData, extendedData, allJsonResponse } = content
+            const { balanceGreaterThanBaseValue, signature, encodedData, extraData, extendedData, allJsonResponse, privateData  } = content
             if (balanceGreaterThanBaseValue === 'true' && signature) {
               const encodedDataObj = JSON.parse(encodedData);
               encodedDataObj.attestation = JSON.parse(encodedDataObj.attestation);
@@ -173,6 +174,7 @@ class PrimusNetwork {
               if (attestationParams.getAllJsonResponse === "true") {
                 this._allJsonResponse[taskId] = responseIds.map((id, i) => ({ id, content: allJsonResponse[i] }));
               }
+              this._allPlainResponse[taskId] = responseIds.map((id, i) => ({ id, content: privateData[i] }));
             } else if (!signature || balanceGreaterThanBaseValue === 'false') {
               let errorCode;
               if (
@@ -207,6 +209,9 @@ class PrimusNetwork {
 
   getAllJsonResponse(taskId: string): string | undefined {
     return this._allJsonResponse[taskId];
+  }
+  getPlainResponse(taskId: string): string | undefined {
+    return this._allPlainResponse[taskId];
   }
 
   getAesKey(taskId: string): string | undefined {
