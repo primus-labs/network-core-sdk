@@ -117,6 +117,7 @@ class PrimusNetwork {
    * @param responseIds - Response IDs array (used when getAllJsonResponse is true)
    * @param timeout - Timeout duration
    * @param taskId - Task ID (for storing extended data)
+   * @param taskTxHash - Task transaction hash (for event reporting)
    * @returns Returns the attestation result object
    * @throws ZkAttestationError Throws error when attestation fails
    */
@@ -125,7 +126,8 @@ class PrimusNetwork {
     attestationParams: any,
     responseIds: string[],
     timeout: number,
-    taskId: string
+    taskId: string,
+    taskTxHash: string
   // @ts-ignore TS2366: All code paths throw or return, but TypeScript cannot infer this
   ): Promise<{
     encodedDataObj: any;
@@ -134,6 +136,7 @@ class PrimusNetwork {
     responseIds?: string[];
     attestationParams: any;
   }> {
+    console.log('taskTxHash:',taskTxHash)
     const appId = await getDeviceId()
     const eventReportBaseParams = {
       source: "",
@@ -141,7 +144,9 @@ class PrimusNetwork {
       appId,
       templateId: "",
       address: attestationParams.address,
-      ext: {}
+      ext: {
+        taskTxHash
+      }
     }
     try { 
       const submitStartTime = Date.now();
@@ -239,6 +244,7 @@ class PrimusNetwork {
             desc: ""
           },
           ext: {
+            ...eventReportBaseParams.ext,
             getAttestationResultRes: JSON.stringify(e?.data)
           }
         })
@@ -291,13 +297,13 @@ class PrimusNetwork {
               }
             }
 
-            const result = await this._processSingleAttestation(api, attestationParams, responseIds, timeout, taskId);
+            const result = await this._processSingleAttestation(api, attestationParams, responseIds, timeout, taskId, taskTxHash);
             attArr.push(result.encodedDataObj);
           } catch (error) {
             return reject(error);
           }
         }
-        // console.log('attestationList from algorithm', attArr);
+        console.log('attestationList from algorithm', attArr);
         return resolve(attArr);
       } catch (error) {
         return reject(error);

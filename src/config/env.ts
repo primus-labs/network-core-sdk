@@ -1,4 +1,4 @@
-const pEnv = 'production'
+const pEnv = 'test'
 const pEnvMap = {
   production: {
     PRIMUS_PROXY_URL: 'wss://api1.padolabs.org/algorithm-proxyV3',
