@@ -4,6 +4,7 @@ import path from 'path';
 global.WebSocket = require('ws');
 export type AlgorithmBackend = 'auto' | 'native' | 'wasm';
 
+const VERSION = '"1.4.6"';
 async function initAlgorithm(mode: AlgorithmBackend = 'auto'): Promise<(params: string) => Promise<string>> {
   const tryLoadNative = (): ((params: string) => Promise<string>) | null => {
     try {
@@ -66,17 +67,17 @@ let callAlgorithm = null;
 export const init = async (mode: AlgorithmBackend = 'auto') => {
   callAlgorithm = await initAlgorithm(mode);
 
-  const logParams = `{"method":"setLogLevel","version":"1.1.1","params":{"logLevel":"error"}}`;
+  const logParams = `{"method":"setLogLevel","version":${VERSION},"params":{"logLevel":"error"}}`;
   const logResult = await callAlgorithm(logParams);
 
-  const params = `{"method":"init","version":"1.1.1","params":{}}`;
+  const params = `{"method":"init","version":${VERSION},"params":{}}`;
   const result = await callAlgorithm(params);
   return result;
 };
 
 
 export const getAttestation = async (paramsObj: any) => {
-  const _paramsObj = { method: "getAttestation", version: "1.1.1", params: paramsObj };
+  const _paramsObj = { method: "getAttestation", version: VERSION, params: paramsObj };
   const params = JSON.stringify(_paramsObj);
   const result = await callAlgorithm(params);
   return JSON.parse(result);
@@ -84,7 +85,7 @@ export const getAttestation = async (paramsObj: any) => {
 
 
 export const getAttestationResult = async (timeout = 2 * 60 * 1000) => {
-  const params = `{"method":"getAttestationResult","version":"1.1.1","params":{"requestid":"1"}}`;
+  const params = `{"method":"getAttestationResult","version":${VERSION},"params":{"requestid":"1"}}`;
 
   return new Promise((resolve, reject) => {
     const start = performance.now();
