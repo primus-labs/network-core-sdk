@@ -2,6 +2,7 @@ import { Attestation, AttNetworkRequest, AttNetworkResponseResolve } from './typ
 // const { ethers } = require("ethers");
 import { ethers } from "ethers";
 import { PublicKey } from "@solana/web3.js";
+import { JSDOM } from "jsdom";
 
 export function isValidNumericString(value: string) {
   const regex = /^[0-9]*$/;
@@ -276,4 +277,46 @@ export const formatErrFn = (error: any) => {
   }
 
   return formatError
+}
+
+export function parseHtmlByXPath(html: string, xpath: string): string | null {
+  if (typeof html !== "string" || typeof xpath !== "string") {
+    return null;
+  }
+
+  const dom = new JSDOM(html);
+  const { document } = dom.window;
+  const result = document.evaluate(
+    xpath,
+    document,
+    null,
+    dom.window.XPathResult.ANY_TYPE,
+    null
+  );
+
+  if (result.resultType === dom.window.XPathResult.STRING_TYPE) {
+    const value = result.stringValue.trim();
+    return value.length > 0 ? value : null;
+  }
+
+  if (result.resultType === dom.window.XPathResult.NUMBER_TYPE) {
+    return Number.isFinite(result.numberValue) ? String(result.numberValue) : null;
+  }
+
+  if (result.resultType === dom.window.XPathResult.BOOLEAN_TYPE) {
+    return String(result.booleanValue);
+  }
+
+  const node = result.iterateNext();
+  if (!node) {
+    return null;
+  }
+
+  if (node.nodeType === dom.window.Node.ATTRIBUTE_NODE) {
+    const value = (node as Attr).value?.trim();
+    return value && value.length > 0 ? value : null;
+  }
+
+  const text = node.textContent?.trim();
+  return text && text.length > 0 ? text : null;
 }
