@@ -23,6 +23,7 @@ class PrimusNetwork {
   private _nodeContract: NodeContract | undefined;
   private _extendedData: Record<string, any> = {};
   private _allJsonResponse: Record<string, any> = {};
+  private _isAttesting: boolean = false;
 
   async init(provider: any, chainId: number, mode: AlgorithmBackend = 'auto') {
     return new Promise(async (resolve, reject) => {
@@ -136,7 +137,6 @@ class PrimusNetwork {
     responseIds?: string[];
     attestationParams: any;
   }> {
-    console.log('taskTxHash:',taskTxHash)
     const appId = await getDeviceId()
     const eventReportBaseParams = {
       source: "",
@@ -145,7 +145,8 @@ class PrimusNetwork {
       templateId: "",
       address: attestationParams.address,
       ext: {
-        taskTxHash
+        taskTxHash,
+        attestor: api
       }
     }
     try { 
@@ -197,6 +198,10 @@ class PrimusNetwork {
           await eventReport({
             ...eventReportBaseParams,
             status: "SUCCESS",
+            ext: {
+              ...eventReportBaseParams.ext,
+              reportTxHash: result?.encodedDataObj?.reportTxHash
+            }
           })
           return result;
         } else if (!signature || balanceGreaterThanBaseValue === 'false') {
@@ -204,7 +209,7 @@ class PrimusNetwork {
           if (
             extraData &&
             JSON.parse(extraData) &&
-            ['-1200010', '-1002001', '-1002002'].includes(
+            ['-500', '-10100', '-10101', '-10102', '-10103', '-10104', '-10105', '-10106', '-10107', '-10108', '-10109', '-10110', '-10111'].includes(
               JSON.parse(extraData).errorCode + ''
             )
           ) {
@@ -255,8 +260,70 @@ class PrimusNetwork {
     }
   }
 
+  private _validateAttestationParams(attestParams: AttestAfterSubmitTaskParams, timeout: number): void {
+    // Validate attestParams exists
+    if (!attestParams) {
+      throw new ZkAttestationError('00005', 'Missing attestParams parameter')
+    }
+
+    // Validate taskId
+    if (!attestParams.taskId || typeof attestParams.taskId !== 'string' || attestParams.taskId.trim() === '') {
+      throw new ZkAttestationError('00005', 'Missing or invalid taskId')
+    }
+
+    // Validate taskTxHash
+    if (!attestParams.taskTxHash || typeof attestParams.taskTxHash !== 'string' || attestParams.taskTxHash.trim() === '') {
+      throw new ZkAttestationError('00005', 'Missing or invalid taskTxHash')
+    }
+
+    // Validate taskAttestors
+    if (!attestParams.taskAttestors || !Array.isArray(attestParams.taskAttestors) || attestParams.taskAttestors.length === 0) {
+      throw new ZkAttestationError('00005', 'Missing or invalid taskAttestors')
+    }
+
+    // Validate address
+    if (!attestParams.address || typeof attestParams.address !== 'string' || attestParams.address.trim() === '') {
+      throw new ZkAttestationError('00005', 'Missing or invalid address')
+    }
+
+    // Validate address format (Ethereum address)
+    if (!ethers.utils.isAddress(attestParams.address)) {
+      throw new ZkAttestationError('00005', 'Invalid address format')
+    }
+
+    // Validate timeout
+    if (typeof timeout !== 'number' || !Number.isFinite(timeout) || timeout <= 0) {
+      throw new ZkAttestationError('00005', 'Invalid timeout parameter')
+    }
+
+    // Validate requests
+    if (!attestParams.requests || !Array.isArray(attestParams.requests) || attestParams.requests.length === 0) {
+      throw new ZkAttestationError('00005', 'Missing or invalid requests array')
+    }
+
+    // Validate responseResolves
+    if (!attestParams.responseResolves || !Array.isArray(attestParams.responseResolves) || attestParams.responseResolves.length === 0) {
+      throw new ZkAttestationError('00005', 'Missing or invalid responseResolves array')
+    }
+  }
+
   async attest(attestParams: AttestAfterSubmitTaskParams, timeout: number = 2 * ONEMINUTE): Promise<RawAttestationResultList> {
     return new Promise(async (resolve, reject) => {
+      // Validate parameters
+      try {
+        this._validateAttestationParams(attestParams, timeout)
+      } catch (error: any) {
+        return reject(error)
+      }
+      // Check if there's already an attestation in progress
+      if (this._isAttesting) {
+        const errorCode = '00003';
+        return reject(new ZkAttestationError(errorCode))
+      }
+
+      // Set attestation flag
+      this._isAttesting = true;
+
       try {
         const { taskId, taskTxHash, taskAttestors: attestorIds, ...attParams } = attestParams
 
@@ -307,6 +374,9 @@ class PrimusNetwork {
         return resolve(attArr);
       } catch (error) {
         return reject(error);
+      } finally {
+        // Always clear the attestation flag when done
+        this._isAttesting = false;
       }
     })
   }

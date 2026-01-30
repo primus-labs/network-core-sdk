@@ -8,7 +8,7 @@ export type AttestationErrorCode =
   "40001" | "40002" |
   "50002" | "50003" | "50004"  | "50005" | "50006" | "50007" | "50008"  | "50009"  | "50010" | "50011" |
   "99999" |
-  "-1200010"
+  "-500" | "-10100" | "-10101" | "-10102" | "-10103" | "-10104" | "-10105" | "-10106" | "-10107" | "-10108" | "-10109" | "-10110" | "-10111"
 
 export type OnChainErrorCode =
   "00007" | "00008"
@@ -68,9 +68,6 @@ export const ErrorCodeMAP = {
   '50010': "Compatibility issues during algorithm execution.",
   '50011': "Unsupported TLS version.",
   '99999':'Undefined error.',
-  '-1200010':"Invalid message.",
-  '-1002001':"Invalid App ID.",
-  '-1002002': "Invalid App Secret.",
   '-500':
     'Unexpected attester node program failure.',
   '-10100': 'Task cannot be executed again due to unexpected failure.',

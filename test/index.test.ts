@@ -1,5 +1,6 @@
 import { PrimusNetwork } from '../src/index';
 import { ethers } from 'ethers';
+// import { PrimaryAttestationParams, SubmitTaskReturnParams, OpType } from '../src/types/index';
 import { PrimaryAttestationParams, SubmitTaskReturnParams } from '../src/types/index';
 import dotenv from 'dotenv';
 
@@ -107,7 +108,9 @@ describe('PrimusNetwork', () => {
             {
                 keyName: "instType",
                 parseType: "json",
-                parsePath: "$.data[0].instType"
+                parsePath: "$.data[0].instType",
+                // op: 'STREQ' as OpType,
+                // value: 'abc',
             }
             ]
         ];
@@ -122,12 +125,16 @@ describe('PrimusNetwork', () => {
             ...submitResult,
             requests,
             responseResolves,
+            // attConditions: [[{
+            //           field: "instType",
+            //           op: 'STREQ' as OpType,
+            //           value: 'abc',
+            // }]]
             // mTLS
         };
 
         let attestResult = await primusNetwork.attest(attestParams2);
         expect(Array.isArray(attestResult)).toBe(true);
-        console.log('Attest result:', attestResult);
 
         const taskResult = await primusNetwork.verifyAndPollTaskResult({
           taskId: attestResult[0].taskId,
