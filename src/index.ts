@@ -4,11 +4,12 @@ import { assemblyParams } from './assembly_params';
 import { init, getAttestation, getAttestationResult, AlgorithmBackend } from "./primus_zk";
 import { NodeContract } from "./classes/NodeContract";
 import { TaskContract } from "./classes/TaskContract";
-import { findFastestWs, resultToObject, formatErrFn } from "./utils";
+import { findFastestWs, resultToObject, formatErrFn, getRawHtmlByXPath, parseJsonByJsonPath } from "./utils";
 import { TaskStatus, TaskResult, SubmitTaskReturnParams, AttestAfterSubmitTaskParams, TokenSymbol, RawAttestationResultList, PrimaryAttestationParams } from './types/index'
 import { SDK_VERSION } from './version';
 import { ZkAttestationError } from './classes/Error';
 import { AttestationErrorCode } from 'config/error';
+
 
 class PrimusNetwork {
   private provider!: ethers.providers.Web3Provider | ethers.providers.JsonRpcProvider | ethers.providers.JsonRpcSigner;
@@ -20,6 +21,7 @@ class PrimusNetwork {
   private _extendedData: Record<string, any> = {};
   private _allJsonResponse: Record<string, any> = {};
   private _allPlainResponse: Record<string, any> = {};
+  private _allResponseResolves: Record<string, any> = {};
 
   async init(provider: any, chainId: number, mode: AlgorithmBackend = 'auto') {
     return new Promise(async (resolve, reject) => {
@@ -175,6 +177,7 @@ class PrimusNetwork {
                 this._allJsonResponse[taskId] = responseIds.map((id, i) => ({ id, content: allJsonResponse[i] }));
               }
               this._allPlainResponse[taskId] = responseIds.map((id, i) => ({ id, content: privateData[i] }));
+              this._allResponseResolves[taskId] = attestParams.responseResolves
             } else if (!signature || balanceGreaterThanBaseValue === 'false') {
               let errorCode;
               if (
@@ -210,8 +213,20 @@ class PrimusNetwork {
   getAllJsonResponse(taskId: string): string | undefined {
     return this._allJsonResponse[taskId];
   }
-  getPlainResponse(taskId: string): string | undefined {
-    return this._allPlainResponse[taskId];
+  getPlainResponse(taskId: string, index: number, fieldPath: string): string | undefined {
+    const jsonResponseArray = this._allJsonResponse[taskId];
+    const correspondingJsonResponse = jsonResponseArray?.[index]?.content;
+    if (!correspondingJsonResponse) {
+      return ''
+    }
+    const parseType = this._allResponseResolves[taskId][index]?.[0]?.parseType  || 'html';
+    if (parseType === 'html') {
+      const xpathValue = getRawHtmlByXPath(correspondingJsonResponse, fieldPath)
+      return xpathValue ?? ''
+    } else {
+      const jsonPathValue = parseJsonByJsonPath(correspondingJsonResponse, fieldPath)
+      return jsonPathValue ?? ''
+    }
   }
 
   getAesKey(taskId: string): string | undefined {

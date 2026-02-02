@@ -2,6 +2,8 @@ import { PrimusNetwork } from '../src/index';
 import { ethers } from 'ethers';
 import { PrimaryAttestationParams, SubmitTaskReturnParams } from '../src/types/index';
 import dotenv from 'dotenv';
+import {  sha256 } from "../src/utils";
+
 
 describe('PrimusNetwork', () => {
   let primusNetwork: PrimusNetwork;
@@ -31,9 +33,9 @@ describe('PrimusNetwork', () => {
       const provider = new ethers.providers.JsonRpcProvider(baseSepoliaRpcUrl);
       const wallet = new ethers.Wallet(privateKey, provider);
       // Test parameters
-      const testAddress = '0x810b7bacEfD5ba495bB688bbFD2501C904036AB7'; // Example address
+      const testAddress = '0x8F0D4188307496926d785fB00E08Ed772f3be890'; // Example address
       const attestParams: PrimaryAttestationParams = {
-        address: testAddress,
+        address: testAddress
       };
 
       try {
@@ -69,20 +71,23 @@ describe('PrimusNetwork', () => {
             body: "",
             }
         ];
+        // /html/body/div[4]/div[2]/div[1]/div[1]
+        const dataXPath = '/html/body/div[4]/div[2]/div[1]/div[1]/table/tbody'
+        const yearXPath = '//*[@id="content"]/div[2]/div/h4[2]'
         const responseResolves = [
             [
-            {
+              {
+                keyName: "year",
+                parseType: "html",
+                parsePath: yearXPath,
+                op: 'SHA256_EX'
+              },
+              {
                 keyName: "data",
                 parseType: "html",
-                parsePath: '//*[@id="data-table-0"]/table/tbody?',
+                parsePath: dataXPath,
                 op: 'SHA256_EX'
-            },
-            {
-              keyName: "year",
-              parseType: "html",
-              parsePath: '//*[@id="content"]/div[2]/div/h4[2]?',
-              op: 'SHA256_EX'
-            }
+              },
             ]
         ];
 
@@ -96,10 +101,20 @@ describe('PrimusNetwork', () => {
             ...submitResult,
             requests,
             responseResolves,
+            getAllJsonResponse: "true",
             // mTLS
         };
 
         let attestResult = await primusNetwork.attest(attestParams2);
+        const yearJsonRes = primusNetwork.getPlainResponse(submitResult.taskId, 0, yearXPath)
+        const dataJsonRes = primusNetwork.getPlainResponse(submitResult.taskId, 0, dataXPath)
+        console.log('yearJsonRes ===', yearJsonRes)
+        console.log('dataJsonRes ===', dataJsonRes)
+        const dataHash = await sha256(dataJsonRes as string);
+        const yearHash = await sha256(yearJsonRes as string);
+        console.log('yearHash ===', yearHash)
+        console.log('dataHash ===', dataHash)
+        
         expect(Array.isArray(attestResult)).toBe(true);
         console.log('Attest result:', attestResult);
 

@@ -74,11 +74,12 @@ function assemblyRequest(requests: AttNetworkRequest[]) {
 }
 
 
-function _getField(parsePath: string, op?: string) {
+function _getField(parsePath: string, op?: string, parseType?: string) {
+  const formatPath = parseType === 'html' ? `${parsePath}?` : parsePath;
   if (op === "SHA256_EX") {
-    return { "type": "FIELD_ARITHMETIC", "op": "SHA256", "field": parsePath };
+    return { "type": "FIELD_ARITHMETIC", "op": "SHA256", "field": formatPath };
   }
-  return parsePath;
+  return formatPath;
 }
 function _getOp(op?: string) {
   if (op === "SHA256_EX") {
@@ -97,8 +98,8 @@ function _getType(op?: string) {
 
 function assemblyResponse(responseResolves: AttNetworkResponseResolve[][]) {
   return responseResolves.map(subArr => {
-    const subconditions = subArr.map(({ keyName, parsePath, op, value }) => ({
-      field: _getField(parsePath, op),
+    const subconditions = subArr.map(({ keyName, parsePath, op, value, parseType }) => ({
+      field: _getField(parsePath, op, parseType),
       reveal_id: keyName,
       op: _getOp(op),
       type: _getType(op),

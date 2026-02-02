@@ -3,6 +3,7 @@ import { Attestation, AttNetworkRequest, AttNetworkResponseResolve } from './typ
 import { ethers } from "ethers";
 import { PublicKey } from "@solana/web3.js";
 import { JSDOM } from "jsdom";
+import { JSONPath } from "jsonpath-plus";
 
 export function isValidNumericString(value: string) {
   const regex = /^[0-9]*$/;
@@ -320,3 +321,114 @@ export function parseHtmlByXPath(html: string, xpath: string): string | null {
   const text = node.textContent?.trim();
   return text && text.length > 0 ? text : null;
 }
+
+export const normalizeLineEndings = (value: string, source: string): string => {
+  if (source.includes("\r\n")) {
+    return value;
+  }
+  return value.replace(/\n/g, "\r\n");
+};
+
+export const getRawHtmlByXPath = (html: string, xpath: string): string | null => {
+  const dom = new JSDOM(html, { includeNodeLocations: true });
+  const { document } = dom.window;
+  const result = document.evaluate(
+    xpath,
+    document,
+    null,
+    dom.window.XPathResult.ANY_TYPE,
+    null
+  );
+  const node = result.iterateNext();
+  if (!node) {
+    return null;
+  }
+  if (node.nodeType === dom.window.Node.ATTRIBUTE_NODE) {
+    return (node as Attr).value ?? null;
+  }
+
+  const location = dom.nodeLocation(node as Node);
+  if (location?.startOffset != null && location?.endOffset != null) {
+    const raw = html.slice(location.startOffset, location.endOffset);
+    return normalizeLineEndings(raw, html);
+  }
+
+  if ((node as Element).outerHTML) {
+    return (node as Element).outerHTML;
+  }
+  return node.textContent ?? null;
+};
+
+/**
+ * Parse JSON by JSONPath and return the value at the specified path
+ * Uses jsonpath-plus library for robust JSONPath support
+ * Supports full JSONPath specification including:
+ * - $.key - root object property
+ * - $.key1.key2 - nested properties
+ * - $[0] - array index
+ * - $.key[0] - array element in object property
+ * - $[0].key - object property in array element
+ * - $[*] - wildcard matching
+ * - $..key - recursive descent
+ * - And more JSONPath features
+ * 
+ * @param json - JSON string or object
+ * @param jsonPath - JSONPath expression (e.g., "$.data.result")
+ * @returns The value at the JSONPath, or null if not found
+ */
+export function parseJsonByJsonPath(json: string | object, jsonPath: string): string | null {
+  if (!jsonPath) {
+    return null;
+  }
+
+  let jsonObj: any;
+  try {
+    if (typeof json === 'string') {
+      jsonObj = JSON.parse(json);
+    } else {
+      jsonObj = json;
+    }
+  } catch (error) {
+    return null;
+  }
+
+  try {
+    // Use jsonpath-plus to query the JSON object
+    // resultType: 'value' returns the actual values
+    const results = JSONPath({ path: jsonPath, json: jsonObj, resultType: 'value' });
+    
+    // If no results found, return null
+    if (!results || results.length === 0) {
+      return null;
+    }
+    
+    // If multiple results, return the first one
+    // (or you could return all results as JSON array if needed)
+    const result = results[0];
+    
+    // Convert result to string if it's not null/undefined
+    if (result === null || result === undefined) {
+      return null;
+    }
+    
+    if (typeof result === 'string') {
+      return result;
+    }
+    
+    // For objects and arrays, return JSON string
+    return JSON.stringify(result);
+  } catch (error) {
+    // If JSONPath parsing fails, return null
+    return null;
+  }
+}
+
+
+export const sha256 = async (message: string): Promise<string> => {
+  const data = new TextEncoder().encode(message);
+  const hashBuffer = await (globalThis.crypto?.subtle
+    ? globalThis.crypto.subtle.digest("SHA-256", data)
+    : require("crypto").webcrypto.subtle.digest("SHA-256", data));
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+};
