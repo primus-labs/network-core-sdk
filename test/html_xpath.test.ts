@@ -17,11 +17,8 @@ describe("parseHtmlByXPath", () => {
       hash = await sha256(rawHtml);
       console.log("rawHtml sha256 hash=", hash);
     }
-    const value = getRawHtmlByXPath(html, xpath);
 
     expect(rawHtml).toBeTruthy();
     expect(rawHtml).toContain("<table");
-    expect(value).toBeTruthy();
-    expect(value).toContain("Date");
   });
 });

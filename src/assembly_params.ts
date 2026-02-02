@@ -75,7 +75,7 @@ function assemblyRequest(requests: AttNetworkRequest[]) {
 
 
 function _getField(parsePath: string, op?: string, parseType?: string) {
-  const formatPath = parseType === 'html' ? `${parsePath}?` : parsePath;
+  const formatPath = parseType === 'html' ? parsePath.endsWith('?') ? parsePath : `${parsePath}?` : parsePath;
   if (op === "SHA256_EX") {
     return { "type": "FIELD_ARITHMETIC", "op": "SHA256", "field": formatPath };
   }

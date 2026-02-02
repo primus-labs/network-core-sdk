@@ -221,7 +221,8 @@ class PrimusNetwork {
     }
     const parseType = this._allResponseResolves[taskId][index]?.[0]?.parseType  || 'html';
     if (parseType === 'html') {
-      const xpathValue = getRawHtmlByXPath(correspondingJsonResponse, fieldPath)
+      const formatFieldPath = fieldPath.endsWith('?') ? fieldPath.slice(0, -1) : fieldPath;
+      const xpathValue = getRawHtmlByXPath(correspondingJsonResponse, formatFieldPath)
       return xpathValue ?? ''
     } else {
       const jsonPathValue = parseJsonByJsonPath(correspondingJsonResponse, fieldPath)
