@@ -90,6 +90,7 @@ describe('PrimusNetwork', () => {
             ...submitResult,
             requests,
             responseResolves,
+            extendedParams: JSON.stringify({ attUrlOptimization: true })
         };
 
         let attestResult = await primusNetwork.attest(attestParams2);
