@@ -78,12 +78,16 @@ function _getField(parsePath: string, op?: string, parseType?: string) {
   const formatPath = parseType === 'html' ? parsePath.endsWith('?') ? parsePath : `${parsePath}?` : parsePath;
   if (op === "SHA256_EX") {
     return { "type": "FIELD_ARITHMETIC", "op": "SHA256", "field": formatPath };
+  } else if (op === "SHA256_WITH_SALT") {
+    return { "type": "FIELD_ARITHMETIC", "op": "SHA256_WITH_SALT", "field": formatPath };
   }
   return formatPath;
 }
 function _getOp(op?: string) {
   if (op === "SHA256_EX") {
     return "REVEAL_HEX_STRING";
+  } else if (op === "SHA256_WITH_SALT") {
+    return "REVEAL_SALTTED_HASH";
   }
   return op ?? 'REVEAL_STRING';
 }

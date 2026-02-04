@@ -20,7 +20,7 @@ class PrimusNetwork {
   private _nodeContract: NodeContract | undefined;
   private _extendedData: Record<string, any> = {};
   private _allJsonResponse: Record<string, any> = {};
-  private _allPlainResponse: Record<string, any> = {};
+  private _allPrivateData: Record<string, any> = {};
   private _allResponseResolves: Record<string, any> = {};
 
   async init(provider: any, chainId: number, mode: AlgorithmBackend = 'auto') {
@@ -176,7 +176,7 @@ class PrimusNetwork {
               if (attestationParams.getAllJsonResponse === "true") {
                 this._allJsonResponse[taskId] = responseIds.map((id, i) => ({ id, content: allJsonResponse[i] }));
               }
-              this._allPlainResponse[taskId] = responseIds.map((id, i) => ({ id, content: privateData[i] }));
+              this._allPrivateData[taskId] = privateData;
               this._allResponseResolves[taskId] = attestParams.responseResolves
             } else if (!signature || balanceGreaterThanBaseValue === 'false') {
               let errorCode;
@@ -227,6 +227,19 @@ class PrimusNetwork {
     } else {
       const jsonPathValue = parseJsonByJsonPath(correspondingJsonResponse, fieldPath)
       return jsonPathValue ?? ''
+    }
+  }
+  getPrivateData(taskId: string, keyName: string): string | undefined {
+    const privateData = this._allPrivateData[taskId];
+    if (!privateData || typeof privateData !== 'string') {
+      return undefined;
+    }
+    try {
+      const parsed = JSON.parse(privateData);
+      return parsed[keyName];
+    } catch (err) {
+      console.error("Failed to parse privateData:", (err as Error).message);
+      return undefined;
     }
   }
 
