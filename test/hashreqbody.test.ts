@@ -79,7 +79,7 @@ describe('PrimusNetwork', () => {
             {
                 keyName: "reqbodykeyname",
                 parseType: "json",
-                parsePath: "^.foo",
+                parsePath: "^.foo", // parsePath uses the "^." prefix to indicate parsing from the root of the request body; "foo" is the field to extract
                 op: "SHA256_WITH_SALT"
             }
             ]
