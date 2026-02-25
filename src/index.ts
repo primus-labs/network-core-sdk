@@ -9,7 +9,7 @@ import { TaskStatus, TaskResult, SubmitTaskReturnParams, AttestAfterSubmitTaskPa
 import { SDK_VERSION } from './version';
 import { ZkAttestationError } from './classes/Error';
 import { AttestationErrorCode } from 'config/error';
-import { eventReport,getDeviceId } from './utils/utils'
+import { eventReport } from './utils/utils';
 import type { ClientType } from './api/index.d';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const packageJson = require('../package.json') as { name: string; version: string };
@@ -27,8 +27,9 @@ class PrimusNetwork {
   private _allPrivateData: Record<string, any> = {};
   private _allResponseResolves: Record<string, any> = {};
   private _isAttesting: boolean = false;
+  private _appName: string = '';
 
-  async init(provider: any, chainId: number, mode: AlgorithmBackend = 'auto') {
+  async init(provider: any, chainId: number, mode: AlgorithmBackend = 'auto', name: string = '') {
     return new Promise(async (resolve, reject) => {
       try {
         if (!this.supportedChainIds.includes(chainId as number)) {
@@ -65,6 +66,7 @@ class PrimusNetwork {
         const activeChainInfo = SUPPORTEDCHAINIDSMAP[chainId as keyof typeof SUPPORTEDCHAINIDSMAP]
         this._taskContract = new TaskContract(this.provider, activeChainInfo.taskContractAddress);
         this._nodeContract = new NodeContract(this.provider, activeChainInfo.nodeContractAddress);
+        this._appName = name;
         // console.log('init _nodeContract', this._nodeContract);
         return resolve(true);
       } catch (error) {
@@ -140,7 +142,8 @@ class PrimusNetwork {
     responseIds?: string[];
     attestationParams: any;
   }> {
-    const appId = await getDeviceId()
+    const userAddress = attestationParams?.user?.address;
+    const appId = this._appName ? this._appName : userAddress;
     const eventReportBaseParams = {
       source: "",
       clientType: packageJson.name as ClientType,
@@ -381,7 +384,7 @@ class PrimusNetwork {
         // Always clear the attestation flag when done
         this._isAttesting = false;
       }
-    })
+    });
   }
 
   getExtendedData(taskId: string): any {

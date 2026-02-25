@@ -57,6 +57,7 @@ describe('PrimusNetwork', () => {
       // Create a real provider for Base Sepolia
       dotenv.config();
       const privateKey = process.env.PRIVATE_KEY;
+      const appName = process.env.APP_NAME;
       if (!privateKey) {
         // eslint-disable-next-line no-console
         console.log('Skipping test: PRIVATE_KEY not set in .env file');
@@ -72,7 +73,7 @@ describe('PrimusNetwork', () => {
 
       try {
         // Act - Initialize the network with wallet (signer)
-        const initResult = await primusNetwork.init(wallet, chainId, "wasm");
+        const initResult = await primusNetwork.init(wallet, chainId, "wasm", appName);
         expect(initResult).toBe(true);
         
         // Act - Submit task (now with a proper signer)
