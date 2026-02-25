@@ -90,7 +90,7 @@ export type SignedAttRequest = {
 
 
 
-export type ComparisonOp = '>' | '>=' | '=' | '!=' | '<' | '<=';
+export type ComparisonOp = '>' | '>=' | '=' | '!=' | '<' | '<=' | 'STREQ' | 'STRNEQ'
 export type OpType = ComparisonOp | 'SHA256' | 'REVEAL_STRING';
 export type AttSubCondition = {
   field: string,

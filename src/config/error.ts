@@ -1,5 +1,5 @@
 export type AttestationErrorCode =
-  "00001" | "00002" | '00003' | "00004" | '00005' | '00006' | "00009" | "00010" | "00015" |
+  "00000" | "00001" | "00002" | '00003' | "00004" | '00005' | '00006' | "00009" | "00010" | "00015" |
   "00101" | "00102" | "00103" | "00104" |
   "01000" |
   "10001" | "10002" | "10003" | "10004" |
@@ -8,7 +8,7 @@ export type AttestationErrorCode =
   "40001" | "40002" |
   "50002" | "50003" | "50004"  | "50005" | "50006" | "50007" | "50008"  | "50009"  | "50010" | "50011" |
   "99999" |
-  "-1200010"
+  "-500" | "-10100" | "-10101" | "-10102" | "-10103" | "-10104" | "-10105" | "-10106" | "-10107" | "-10108" | "-10109" | "-10110" | "-10111"
 
 export type OnChainErrorCode =
   "00007" | "00008"
@@ -22,25 +22,8 @@ export const ErrorCodeMAP = {
   '00003':'A verification process is in progress. Please try again later.',
   '00004':'The user closes or cancels the verification process.',
   '00005':'Wrong SDK parameters.',
-  // '00006':'No Primus extension version 0.3.15 or above was detected as installed.',
-  // '00007':'Insufficient wallet balance.',
-  // '00008':'Failed to submit the proof on-chain. Or other errors in the Wallet operations.',
-  // '00009':'Your dApp is not registered. Please contact the Primus team.',
-  // '00010':'Verification failed. Please try again later.',
-  // '00011':'Launch failed: unstable connection.',
-  '00012':'Invalid Template ID.',
-  '00013': 'Target data missing. Please check whether the data json path in the request URL’s response aligns with your template.',
-  '00014': 'The verification process timed out.',
   '00015': 'Invalid Algorithm Parameters',
-  '00016': 'Nothing to refund',
-  // "00101":'Insufficient assets in your Trading Account. Please confirm and try again later.',
-
-  // '00102':'Attestation requirements not met. Insufficient assets balance in Binance Spot Account.',
-  //  "00103": 'This account may have already been bound to a wallet address, or your wallet address may already have a zkAttestation with another Binance account.',
   '00104': 'Not met the verification requirements.',
-
-  '01000': 'Attestation timeout.',
-
   '10001':'Unstable internet connection. Please try again.',
   '10002':'Unstable internet connection. Please try again.',
   '10003':"Unstable internet connection. Please try again.",
@@ -68,9 +51,6 @@ export const ErrorCodeMAP = {
   '50010': "Compatibility issues during algorithm execution.",
   '50011': "Unsupported TLS version.",
   '99999':'Undefined error.',
-  '-1200010':"Invalid message.",
-  '-1002001':"Invalid App ID.",
-  '-1002002': "Invalid App Secret.",
   '-500':
     'Unexpected attester node program failure.',
   '-10100': 'Task cannot be executed again due to unexpected failure.',

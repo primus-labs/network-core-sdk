@@ -9,6 +9,10 @@ import { TaskStatus, TaskResult, SubmitTaskReturnParams, AttestAfterSubmitTaskPa
 import { SDK_VERSION } from './version';
 import { ZkAttestationError } from './classes/Error';
 import { AttestationErrorCode } from 'config/error';
+import { eventReport,getDeviceId } from './utils/utils'
+import type { ClientType } from './api/index.d';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const packageJson = require('../package.json') as { name: string; version: string };
 
 
 class PrimusNetwork {
@@ -22,6 +26,7 @@ class PrimusNetwork {
   private _allJsonResponse: Record<string, any> = {};
   private _allPrivateData: Record<string, any> = {};
   private _allResponseResolves: Record<string, any> = {};
+  private _isAttesting: boolean = false;
 
   async init(provider: any, chainId: number, mode: AlgorithmBackend = 'auto') {
     return new Promise(async (resolve, reject) => {
@@ -109,8 +114,219 @@ class PrimusNetwork {
     })
   }
 
+  /**
+   * Process attestation for a single attestor
+   * @param api - The API URL of the attestor
+   * @param attestationParams - Assembled attestation parameters
+   * @param responseIds - Response IDs array (used when getAllJsonResponse is true)
+   * @param timeout - Timeout duration
+   * @param taskId - Task ID (for storing extended data)
+   * @param taskTxHash - Task transaction hash (for event reporting)
+   * @returns Returns the attestation result object
+   * @throws ZkAttestationError Throws error when attestation fails
+   */
+  private async _processSingleAttestation(
+    api: string,
+    attestationParams: any,
+    responseIds: string[],
+    timeout: number,
+    taskId: string,
+    taskTxHash: string
+  // @ts-ignore TS2366: All code paths throw or return, but TypeScript cannot infer this
+  ): Promise<{
+    encodedDataObj: any;
+    extendedData?: string;
+    allJsonResponse?: any[];
+    responseIds?: string[];
+    attestationParams: any;
+  }> {
+    const appId = await getDeviceId()
+    const eventReportBaseParams = {
+      source: "",
+      clientType: packageJson.name as ClientType,
+      appId,
+      templateId: "",
+      address: attestationParams.address,
+      ext: {
+        taskTxHash,
+        attestor: api
+      }
+    }
+    try { 
+      const submitStartTime = Date.now();
+      const getAttestationRes = await getAttestation(attestationParams);
+      // console.log('getAttestation:', getAttestationRes);
+      if (getAttestationRes.retcode !== "0") {
+        const errorCode: AttestationErrorCode = getAttestationRes.retcode === '2' ? '00001' : '00000';
+        await eventReport({
+          ...eventReportBaseParams,
+          status: "FAILED",
+          detail: {
+            code: errorCode,
+            desc: ""
+          },
+        })
+        throw new ZkAttestationError(errorCode)
+      }
+      const res: any = await getAttestationResult(timeout);
+      // console.log('getAttestationResult:', JSON.stringify(res));
+      const submitEndTime = Date.now();
+      const submitTime = submitEndTime - submitStartTime;
+      console.log('----------Attest algorithm duration:', submitTime);
+      // console.log('getAttestationResult:', res);
+      const { retcode, content, details } = res
+      if (retcode === '0') {
+        const { balanceGreaterThanBaseValue, signature, encodedData, extraData, extendedData, allJsonResponse } = content
+        if (balanceGreaterThanBaseValue === 'true' && signature) {
+          const encodedDataObj = JSON.parse(encodedData);
+          encodedDataObj.attestation = JSON.parse(encodedDataObj.attestation);
+          encodedDataObj.attestationTime = submitTime;
+          encodedDataObj.attestorUrl = api;
+          
+          const result: any = {
+            encodedDataObj,
+            attestationParams
+          };
+
+          if (attestationParams.specialTask) {
+            this._extendedData[taskId] = extendedData;
+            result.extendedData = extendedData;
+          }
+          if (attestationParams.getAllJsonResponse === "true") {
+            const allJsonResponseData = responseIds.map((id, i) => ({ id, content: allJsonResponse[i] }));
+            this._allJsonResponse[taskId] = allJsonResponseData;
+            result.allJsonResponse = allJsonResponseData;
+            result.responseIds = responseIds;
+          }
+          await eventReport({
+            ...eventReportBaseParams,
+            status: "SUCCESS",
+            ext: {
+              ...eventReportBaseParams.ext,
+              reportTxHash: result?.encodedDataObj?.reportTxHash
+            }
+          })
+          return result;
+        } else if (!signature || balanceGreaterThanBaseValue === 'false') {
+          let errorCode;
+          if (
+            extraData &&
+            JSON.parse(extraData) &&
+            ['-500', '-10100', '-10101', '-10102', '-10103', '-10104', '-10105', '-10106', '-10107', '-10108', '-10109', '-10110', '-10111'].includes(
+              JSON.parse(extraData).errorCode + ''
+            )
+          ) {
+            errorCode = JSON.parse(extraData).errorCode + '';
+          } else {
+            errorCode = '00104';
+          }
+          await eventReport({
+            ...eventReportBaseParams,
+            status: "FAILED",
+            detail: {
+              code: errorCode,
+              desc: ""
+            },
+          })
+          throw new ZkAttestationError(errorCode as AttestationErrorCode, '', res)
+        }
+      } else if (retcode === '2') {
+        const { errlog: { code } } = details;
+        await eventReport({
+          ...eventReportBaseParams,
+          status: "FAILED",
+          detail: {
+            code,
+            desc: ""
+          },
+        })
+        throw new ZkAttestationError(code, '', res)
+      }
+    } catch (e:any) {
+      if (e?.code === 'timeout') {
+        await eventReport({
+          ...eventReportBaseParams,
+          status: "FAILED",
+          detail: {
+            code: '00002',
+            desc: ""
+          },
+          ext: {
+            ...eventReportBaseParams.ext,
+            getAttestationResultRes: JSON.stringify(e?.data)
+          }
+        })
+        throw new ZkAttestationError('00002', '', e?.data)
+      } else {
+        throw e;
+      }
+    }
+  }
+
+  private _validateAttestationParams(attestParams: AttestAfterSubmitTaskParams, timeout: number): void {
+    // Validate attestParams exists
+    if (!attestParams) {
+      throw new ZkAttestationError('00005', 'Missing attestParams parameter')
+    }
+
+    // Validate taskId
+    if (!attestParams.taskId || typeof attestParams.taskId !== 'string' || attestParams.taskId.trim() === '') {
+      throw new ZkAttestationError('00005', 'Missing or invalid taskId')
+    }
+
+    // Validate taskTxHash
+    if (!attestParams.taskTxHash || typeof attestParams.taskTxHash !== 'string' || attestParams.taskTxHash.trim() === '') {
+      throw new ZkAttestationError('00005', 'Missing or invalid taskTxHash')
+    }
+
+    // Validate taskAttestors
+    if (!attestParams.taskAttestors || !Array.isArray(attestParams.taskAttestors) || attestParams.taskAttestors.length === 0) {
+      throw new ZkAttestationError('00005', 'Missing or invalid taskAttestors')
+    }
+
+    // Validate address
+    if (!attestParams.address || typeof attestParams.address !== 'string' || attestParams.address.trim() === '') {
+      throw new ZkAttestationError('00005', 'Missing or invalid address')
+    }
+
+    // Validate address format (Ethereum address)
+    if (!ethers.utils.isAddress(attestParams.address)) {
+      throw new ZkAttestationError('00005', 'Invalid address format')
+    }
+
+    // Validate timeout
+    if (typeof timeout !== 'number' || !Number.isFinite(timeout) || timeout <= 0) {
+      throw new ZkAttestationError('00005', 'Invalid timeout parameter')
+    }
+
+    // Validate requests
+    if (!attestParams.requests || !Array.isArray(attestParams.requests) || attestParams.requests.length === 0) {
+      throw new ZkAttestationError('00005', 'Missing or invalid requests array')
+    }
+
+    // Validate responseResolves
+    if (!attestParams.responseResolves || !Array.isArray(attestParams.responseResolves) || attestParams.responseResolves.length === 0) {
+      throw new ZkAttestationError('00005', 'Missing or invalid responseResolves array')
+    }
+  }
+
   async attest(attestParams: AttestAfterSubmitTaskParams, timeout: number = 2 * ONEMINUTE): Promise<RawAttestationResultList> {
     return new Promise(async (resolve, reject) => {
+      // Validate parameters
+      try {
+        this._validateAttestationParams(attestParams, timeout)
+      } catch (error: any) {
+        return reject(error)
+      }
+      // Check if there's already an attestation in progress
+      if (this._isAttesting) {
+        const errorCode = '00003';
+        return reject(new ZkAttestationError(errorCode))
+      }
+
+      // Set attestation flag
+      this._isAttesting = true;
+
       try {
         const { taskId, taskTxHash, taskAttestors: attestorIds, ...attParams } = attestParams
 
@@ -125,83 +341,45 @@ class PrimusNetwork {
         let attArr: RawAttestationResultList = []
 
         for (const api of attestorsUrlArr) {
-          let extendedParamsObj = attParams.extendedParams ? JSON.parse(attParams.extendedParams) : {}
-          Object.assign(extendedParamsObj, {
-            taskId, taskTxHash, chainId: this.chainId,
-            primusNetworkCoreSdkVersion: SDK_VERSION,
-          })
+          try {
+            // Assemble attestation parameters for each attestor
+            let extendedParamsObj = attParams.extendedParams ? JSON.parse(attParams.extendedParams) : {}
+            Object.assign(extendedParamsObj, {
+              taskId, taskTxHash, chainId: this.chainId,
+              primusNetworkCoreSdkVersion: SDK_VERSION,
+            })
 
-          let formatAttParams = {
-            ...attParams,
-            algoDomain: api,
-            extendedParams: JSON.stringify(extendedParamsObj)
-          }
-          const attestationParams = assemblyParams(formatAttParams);
-          let responseIds: string[] = [];
-          if (attestationParams.getAllJsonResponse === "true") {
-            const { responseResolves } = attParams;
-            for (const responseResolve of responseResolves) {
-              responseIds.push(responseResolve[0].keyName)
+            let formatAttParams = {
+              ...attParams,
+              algoDomain: api,
+              extendedParams: JSON.stringify(extendedParamsObj)
             }
-            // console.log('responseIds', responseIds);
-            if (responseIds.length != responseResolves.length) {
-              return reject(new ZkAttestationError('00015'))
+            const attestationParams = assemblyParams(formatAttParams);
+            let responseIds: string[] = [];
+            if (attestationParams.getAllJsonResponse === "true") {
+              const { responseResolves } = attParams;
+              for (const responseResolve of responseResolves) {
+                responseIds.push(responseResolve[0].keyName)
+              }
+              // console.log('responseIds', responseIds);
+              if (responseIds.length != responseResolves.length) {
+                return reject(new ZkAttestationError('00015'))
+              }
             }
-          }
-          const submitStartTime = Date.now();
-          const getAttestationRes = await getAttestation(attestationParams);
-          // console.log('getAttestation:', getAttestationRes);
-          if (getAttestationRes.retcode !== "0") {
-            return reject(new ZkAttestationError('00001'))
-          }
-          const res: any = await getAttestationResult(timeout);
-          // console.log('getAttestationResult:', JSON.stringify(res));
-          const submitEndTime = Date.now();
-          const submitTime = submitEndTime - submitStartTime;
-          console.log('----------Attest algorithm duration:', submitTime);
-          // console.log('getAttestationResult:', res);
-          const { retcode, content, details } = res
-          if (retcode === '0') {
-            const { balanceGreaterThanBaseValue, signature, encodedData, extraData, extendedData, allJsonResponse, privateData  } = content
-            if (balanceGreaterThanBaseValue === 'true' && signature) {
-              const encodedDataObj = JSON.parse(encodedData);
-              encodedDataObj.attestation = JSON.parse(encodedDataObj.attestation);
-              encodedDataObj.attestationTime = submitTime;
-              encodedDataObj.attestorUrl = api;
-              attArr.push(encodedDataObj);
 
-              if (attestationParams.specialTask) {
-                this._extendedData[taskId] = extendedData;
-              }
-              if (attestationParams.getAllJsonResponse === "true") {
-                this._allJsonResponse[taskId] = responseIds.map((id, i) => ({ id, content: allJsonResponse[i] }));
-              }
-              this._allPrivateData[taskId] = privateData;
-              this._allResponseResolves[taskId] = attestParams.responseResolves
-            } else if (!signature || balanceGreaterThanBaseValue === 'false') {
-              let errorCode;
-              if (
-                extraData &&
-                JSON.parse(extraData) &&
-                ['-1200010', '-1002001', '-1002002'].includes(
-                  JSON.parse(extraData).errorCode + ''
-                )
-              ) {
-                errorCode = JSON.parse(extraData).errorCode + '';
-              } else {
-                errorCode = '00104';
-              }
-              return reject(new ZkAttestationError(errorCode as AttestationErrorCode, '', res))
-            }
-          } else if (retcode === '2') {
-            const { errlog: { code } } = details;
-            return reject(new ZkAttestationError(code, '', res))
+            const result = await this._processSingleAttestation(api, attestationParams, responseIds, timeout, taskId, taskTxHash);
+            attArr.push(result.encodedDataObj);
+          } catch (error) {
+            return reject(error);
           }
         }
-        // console.log('attestationList from algorithm', attArr);
+        console.log('attestationList from algorithm', attArr);
         return resolve(attArr);
       } catch (error) {
         return reject(error);
+      } finally {
+        // Always clear the attestation flag when done
+        this._isAttesting = false;
       }
     })
   }

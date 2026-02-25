@@ -1,6 +1,6 @@
 {
   "name": "@primuslabs/network-core-sdk",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "author": "Primus Labs <dev@primuslabs.org>",
   "description": "Primus network zkTLS core sdk",
   "repository": {
@@ -62,10 +62,12 @@
   },
   "dependencies": {
     "@solana/web3.js": "^1.98.4",
+    "crypto": "^1.0.1",
     "ethers": "^5.7.2",
     "jsdom": "^27.0.1",
     "jsonpath-plus": "^10.3.0",
     "node-addon-api": "^8.3.1",
+    "node-machine-id": "^1.1.12",
     "uuid": "^11.0.4",
     "ws": "^8.18.0"
   }
