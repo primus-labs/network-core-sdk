@@ -124,6 +124,7 @@ class PrimusNetwork {
    * @param timeout - Timeout duration
    * @param taskId - Task ID (for storing extended data)
    * @param taskTxHash - Task transaction hash (for event reporting)
+   * @param responseResolves - Same as attest() `attestParams.responseResolves` (for getPlainResponse)
    * @returns Returns the attestation result object
    * @throws ZkAttestationError Throws error when attestation fails
    */
@@ -133,7 +134,8 @@ class PrimusNetwork {
     responseIds: string[],
     timeout: number,
     taskId: string,
-    taskTxHash: string
+    taskTxHash: string,
+    responseResolves: AttestAfterSubmitTaskParams['responseResolves']
   // @ts-ignore TS2366: All code paths throw or return, but TypeScript cannot infer this
   ): Promise<{
     encodedDataObj: any;
@@ -179,7 +181,7 @@ class PrimusNetwork {
       // console.log('getAttestationResult:', res);
       const { retcode, content, details } = res
       if (retcode === '0') {
-        const { balanceGreaterThanBaseValue, signature, encodedData, extraData, extendedData, allJsonResponse } = content
+        const { balanceGreaterThanBaseValue, signature, encodedData, extraData, extendedData, allJsonResponse, privateData } = contents
         if (balanceGreaterThanBaseValue === 'true' && signature) {
           const encodedDataObj = JSON.parse(encodedData);
           encodedDataObj.attestation = JSON.parse(encodedDataObj.attestation);
@@ -201,6 +203,8 @@ class PrimusNetwork {
             result.allJsonResponse = allJsonResponseData;
             result.responseIds = responseIds;
           }
+          this._allPrivateData[taskId] = privateData;
+          this._allResponseResolves[taskId] = responseResolves;
           await eventReport({
             ...eventReportBaseParams,
             status: "SUCCESS",
@@ -370,7 +374,15 @@ class PrimusNetwork {
               }
             }
 
-            const result = await this._processSingleAttestation(api, attestationParams, responseIds, timeout, taskId, taskTxHash);
+            const result = await this._processSingleAttestation(
+              api,
+              attestationParams,
+              responseIds,
+              timeout,
+              taskId,
+              taskTxHash,
+              attestParams.responseResolves
+            );
             attArr.push(result.encodedDataObj);
           } catch (error) {
             return reject(error);
