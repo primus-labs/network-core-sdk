@@ -181,7 +181,7 @@ class PrimusNetwork {
       // console.log('getAttestationResult:', res);
       const { retcode, content, details } = res
       if (retcode === '0') {
-        const { balanceGreaterThanBaseValue, signature, encodedData, extraData, extendedData, allJsonResponse, privateData } = contents
+        const { balanceGreaterThanBaseValue, signature, encodedData, extraData, extendedData, allJsonResponse, privateData } = content
         if (balanceGreaterThanBaseValue === 'true' && signature) {
           const encodedDataObj = JSON.parse(encodedData);
           encodedDataObj.attestation = JSON.parse(encodedDataObj.attestation);
