@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { SUPPORTEDCHAINIDS, SUPPORTEDCHAINIDSMAP, ONEMINUTE } from "./config/constants";
+import { SUPPORTEDCHAINIDS, SUPPORTEDCHAINIDSMAP, ONEMINUTE, ENV } from "./config/constants";
 import { assemblyParams } from './assembly_params';
 import { init, getAttestation, getAttestationResult, AlgorithmBackend } from "./primus_zk";
 import { NodeContract } from "./classes/NodeContract";
@@ -10,7 +10,7 @@ import { SDK_VERSION } from './version';
 import { ZkAttestationError } from './classes/Error';
 import { AttestationErrorCode } from 'config/error';
 import { eventReport } from './utils/utils';
-import type { ClientType } from './api/index.d';
+import type { ClientType, EventReportRawData } from './api/index.d';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const packageJson = require('../package.json') as { name: string; version: string };
 
@@ -28,6 +28,27 @@ class PrimusNetwork {
   private _allResponseResolves: Record<string, any> = {};
   private _isAttesting: boolean = false;
   private _appName: string = '';
+
+  private shouldReportEvent(): boolean {
+    if (ENV !== 'production') {
+      return true;
+    }
+    if (this.chainId === undefined) {
+      return false;
+    }
+    const chainInfo = SUPPORTEDCHAINIDSMAP[this.chainId as keyof typeof SUPPORTEDCHAINIDSMAP];
+    if (!chainInfo) {
+      return false;
+    }
+    return !(chainInfo as { isTestnet?: boolean }).isTestnet;
+  }
+
+  private async reportEventIfNeeded(rawDataObj: EventReportRawData): Promise<void> {
+    if (!this.shouldReportEvent()) {
+      return;
+    }
+    await eventReport(rawDataObj);
+  }
 
   async init(provider: any, chainId: number, mode: AlgorithmBackend = 'auto', name: string = '') {
     return new Promise(async (resolve, reject) => {
@@ -154,7 +175,8 @@ class PrimusNetwork {
       address: attestationParams.address,
       ext: {
         taskTxHash,
-        attestor: api
+        attestor: api,
+        chainId: this.chainId
       }
     }
     try { 
@@ -163,7 +185,7 @@ class PrimusNetwork {
       // console.log('getAttestation:', getAttestationRes);
       if (getAttestationRes.retcode !== "0") {
         const errorCode: AttestationErrorCode = getAttestationRes.retcode === '2' ? '00001' : '00000';
-        await eventReport({
+        await this.reportEventIfNeeded({
           ...eventReportBaseParams,
           status: "FAILED",
           detail: {
@@ -205,7 +227,7 @@ class PrimusNetwork {
           }
           this._allPrivateData[taskId] = privateData;
           this._allResponseResolves[taskId] = responseResolves;
-          await eventReport({
+          await this.reportEventIfNeeded({
             ...eventReportBaseParams,
             status: "SUCCESS",
             ext: {
@@ -227,7 +249,7 @@ class PrimusNetwork {
           } else {
             errorCode = '00104';
           }
-          await eventReport({
+          await this.reportEventIfNeeded({
             ...eventReportBaseParams,
             status: "FAILED",
             detail: {
@@ -239,7 +261,7 @@ class PrimusNetwork {
         }
       } else if (retcode === '2') {
         const { errlog: { code } } = details;
-        await eventReport({
+        await this.reportEventIfNeeded({
           ...eventReportBaseParams,
           status: "FAILED",
           detail: {
@@ -251,7 +273,7 @@ class PrimusNetwork {
       }
     } catch (e:any) {
       if (e?.code === 'timeout') {
-        await eventReport({
+        await this.reportEventIfNeeded({
           ...eventReportBaseParams,
           status: "FAILED",
           detail: {
