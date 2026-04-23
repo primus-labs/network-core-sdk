@@ -50,7 +50,13 @@ class PrimusNetwork {
     await eventReport(rawDataObj);
   }
 
-  async init(provider: any, chainId: number, mode: AlgorithmBackend = 'auto', name: string = '') {
+  async init(
+    provider: any,
+    chainId: number,
+    mode: AlgorithmBackend = 'auto',
+    name: string = '',
+    options: { algorithmVersion?: string } = {}
+  ) {
     return new Promise(async (resolve, reject) => {
       try {
         if (!this.supportedChainIds.includes(chainId as number)) {
@@ -83,7 +89,7 @@ class PrimusNetwork {
         this.provider = signer ?? formatProvider;
         this.chainId = chainId;
         // console.log('init chainId', this.chainId);
-        await init(mode);
+        await init(mode, options);
         const activeChainInfo = SUPPORTEDCHAINIDSMAP[chainId as keyof typeof SUPPORTEDCHAINIDSMAP]
         this._taskContract = new TaskContract(this.provider, activeChainInfo.taskContractAddress);
         this._nodeContract = new NodeContract(this.provider, activeChainInfo.nodeContractAddress);

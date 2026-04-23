@@ -4,7 +4,8 @@ import path from 'path';
 global.WebSocket = require('ws');
 export type AlgorithmBackend = 'auto' | 'native' | 'wasm';
 
-const VERSION = "1.4.6";
+const DEFAULT_VERSION = "1.4.6";
+let algorithmVersion = DEFAULT_VERSION;
 async function initAlgorithm(mode: AlgorithmBackend = 'auto'): Promise<(params: string) => Promise<string>> {
   const tryLoadNative = (): ((params: string) => Promise<string>) | null => {
     try {
@@ -64,20 +65,21 @@ async function initAlgorithm(mode: AlgorithmBackend = 'auto'): Promise<(params: 
 }
 
 let callAlgorithm = null;
-export const init = async (mode: AlgorithmBackend = 'auto') => {
+export const init = async (mode: AlgorithmBackend = 'auto', options: { algorithmVersion?: string } = {}) => {
+  algorithmVersion = options.algorithmVersion ?? DEFAULT_VERSION;
   callAlgorithm = await initAlgorithm(mode);
 
-  const logParams = `{"method":"setLogLevel","version":"${VERSION}","params":{"logLevel":"error"}}`;
+  const logParams = `{"method":"setLogLevel","version":"${algorithmVersion}","params":{"logLevel":"error"}}`;
   const logResult = await callAlgorithm(logParams);
 
-  const params = `{"method":"init","version":"${VERSION}","params":{}}`;
+  const params = `{"method":"init","version":"${algorithmVersion}","params":{}}`;
   const result = await callAlgorithm(params);
   return result;
 };
 
 
 export const getAttestation = async (paramsObj: any) => {
-  const _paramsObj = { method: "getAttestation", version: VERSION, params: paramsObj };
+  const _paramsObj = { method: "getAttestation", version: algorithmVersion, params: paramsObj };
   const params = JSON.stringify(_paramsObj);
   const result = await callAlgorithm(params);
   return JSON.parse(result);
@@ -85,7 +87,7 @@ export const getAttestation = async (paramsObj: any) => {
 
 
 export const getAttestationResult = async (timeout = 2 * 60 * 1000) => {
-  const params = `{"method":"getAttestationResult","version":"${VERSION}","params":{"requestid":"1"}}`;
+  const params = `{"method":"getAttestationResult","version":"${algorithmVersion}","params":{"requestid":"1"}}`;
 
   return new Promise((resolve, reject) => {
     const start = performance.now();
@@ -122,7 +124,7 @@ export const getAttestationConfig = () => {
     proxyUrl: "wss://api-dev.padolabs.org/algoproxyV2", // should set
     basePort: "443",
     getdatatime: "1735028372985", // todo:auto generate
-    credVersion: "1.0.5",
+    credVersion: algorithmVersion,
     modelType: "proxytls", // one of [mpctls, proxytls]
     user: {
       userid: "1111111111111111111",
