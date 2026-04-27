@@ -8,12 +8,18 @@ import { findFastestWs, resultToObject, formatErrFn, getRawHtmlByXPath, parseJso
 import { TaskStatus, TaskResult, SubmitTaskReturnParams, AttestAfterSubmitTaskParams, TokenSymbol, RawAttestationResultList, PrimaryAttestationParams } from './types/index'
 import { SDK_VERSION } from './version';
 import { ZkAttestationError } from './classes/Error';
-import { AttestationErrorCode } from 'config/error';
+import { ALGO_ERR_NORMALIZE_TO_50000, AttestationErrorCode } from './config/error';
 import { eventReport } from './utils/utils';
 import type { ClientType, EventReportRawData } from './api/index.d';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const packageJson = require('../package.json') as { name: string; version: string };
 
+function buildEventReportCode(code: string, subCode: unknown): string {
+  if (subCode === undefined || subCode === null || subCode === '') {
+    return code;
+  }
+  return `${code}:${String(subCode)}`;
+}
 
 class PrimusNetwork {
   private provider!: ethers.providers.Web3Provider | ethers.providers.JsonRpcProvider | ethers.providers.JsonRpcSigner;
@@ -266,16 +272,34 @@ class PrimusNetwork {
           throw new ZkAttestationError(errorCode as AttestationErrorCode, '', res)
         }
       } else if (retcode === '2') {
-        const { errlog: { code } } = details;
+        const { errlog: { code: rawCode, desc: detailsDesc } = {} } = details || {};
+        const rawNum = rawCode != null && rawCode !== '' ? Number(rawCode) : NaN;
+        const mapped50000Sub = ALGO_ERR_NORMALIZE_TO_50000[rawNum];
+        let resolvedCode =
+          rawCode != null && String(rawCode).trim() !== '' ? String(rawCode) : '99999';
+        let resolvedSubCode: string | undefined;
+        if (mapped50000Sub !== undefined) {
+          resolvedCode = `50000:${mapped50000Sub}`;
+        } else if (rawNum === 30001) {
+          resolvedSubCode =
+            typeof detailsDesc === 'string' ? detailsDesc.match(/\b\d{3}\b/)?.[0] : undefined;
+        }
+
+        const reportCode = buildEventReportCode(resolvedCode, resolvedSubCode);
         await this.reportEventIfNeeded({
           ...eventReportBaseParams,
-          status: "FAILED",
+          status: 'FAILED',
           detail: {
-            code,
-            desc: ""
+            code: reportCode,
+            desc: '',
           },
-        })
-        throw new ZkAttestationError(code, '', res)
+        });
+        throw new ZkAttestationError(
+          resolvedCode as AttestationErrorCode,
+          '',
+          res,
+          resolvedSubCode
+        );
       }
     } catch (e:any) {
       if (e?.code === 'timeout') {
