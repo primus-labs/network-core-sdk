@@ -1,5 +1,6 @@
 import { ethers } from 'ethers';
-import { SUPPORTEDCHAINIDS, SUPPORTEDCHAINIDSMAP, ONEMINUTE, ENV } from "./config/constants";
+import { SUPPORTEDCHAINIDS, SUPPORTEDCHAINIDSMAP, ONEMINUTE } from "./config/constants";
+import { ENV } from './config/env';
 import { assemblyParams } from './assembly_params';
 import { init, getAttestation, getAttestationResult, AlgorithmBackend } from "./primus_zk";
 import { NodeContract } from "./classes/NodeContract";
@@ -20,6 +21,8 @@ function buildEventReportCode(code: string, subCode: unknown): string {
   }
   return `${code}:${String(subCode)}`;
 }
+
+const EVENT_REPORT_SKIP_FAILED_CODES = new Set(['00003', '00004', '00005']);
 
 class PrimusNetwork {
   private provider!: ethers.providers.Web3Provider | ethers.providers.JsonRpcProvider | ethers.providers.JsonRpcSigner;
@@ -52,6 +55,13 @@ class PrimusNetwork {
   private async reportEventIfNeeded(rawDataObj: EventReportRawData): Promise<void> {
     if (!this.shouldReportEvent()) {
       return;
+    }
+    if (rawDataObj.status === 'FAILED') {
+      const reportCode = rawDataObj.detail?.code;
+      const baseCode = reportCode ? reportCode.split(':')[0] : undefined;
+      if (baseCode && EVENT_REPORT_SKIP_FAILED_CODES.has(baseCode)) {
+        return;
+      }
     }
     await eventReport(rawDataObj);
   }

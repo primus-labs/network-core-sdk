@@ -55,5 +55,3 @@ export const SUPPORTEDCHAINIDSMAP = {
 
 
 export const SUPPORTEDCHAINIDS: number[] = Object.keys(SUPPORTEDCHAINIDSMAP).map(i => Number(i));
-
-export const ENV = 'production';

@@ -1,4 +1,4 @@
-const pEnv = 'production';
+const pEnv: 'production' | 'test' = 'production';
 const pEnvMap = {
   production: {
     BASE_SERVICE_URL: 'https://api.padolabs.org',
@@ -9,4 +9,5 @@ const pEnvMap = {
 };
 
 
-export const BASE_SERVICE_URL = pEnvMap[pEnv].BASE_SERVICE_URL
+export const ENV: string = pEnv;
+export const BASE_SERVICE_URL = pEnvMap[pEnv].BASE_SERVICE_URL;

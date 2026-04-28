@@ -53,7 +53,9 @@ export class ZkAttestationError {
       errorCodeLookup['99999'] ||
       '';
     this.code = code;
-    this.data = data;
+    if (data !== undefined && data !== null && data !== '') {
+      this.data = data;
+    }
   }
 
   /**
