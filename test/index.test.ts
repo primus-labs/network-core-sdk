@@ -73,7 +73,7 @@ describe('PrimusNetwork', () => {
 
       try {
         // Act - Initialize the network with wallet (signer)
-        const initResult = await primusNetwork.init(wallet, chainId, "wasm", appName);
+        const initResult = await primusNetwork.init(wallet, chainId, "native", appName);
         expect(initResult).toBe(true);
         
         // Act - Submit task (now with a proper signer)
