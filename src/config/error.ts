@@ -6,7 +6,7 @@ export type AttestationErrorCode =
   '30001' | '30001:301' | '30001:302' | '30001:401' | '30001:403' | '30001:404' | '30001:429' | '30002' | '30003' | '30004' | '30005' | '30006' |
   '40001' | '40002' |
   '50000:501' | '50000:502' | '50003' | '50004' | '50000:505' | '50006' | '50000:507' | '50000:508' | '50009' | '50000:510' | '50011' |
-  '99999' |
+  '99999' | '99999:001' |
   '-500' | '-10101' | '-10102' | '-10103' | '-10104' | '-10105' | '-10106' | '-10107' | '-10108' | '-10109' | '-10110' | '-10111'
 
 
@@ -66,6 +66,7 @@ export const ErrorCodeMAP = {
   '50000:510': 'Internal algorithm error. Contact Primus Team for assistance.',
   '50011': 'Unsupported TLS version. Contact Primus Team for assistance.',
   '99999': 'Undefined error. Please try again later.',
+  '99999:001': 'Undefined error. Please try again later.',
   '-500': 'Unexpected attester node service failure. Please try again later.',
   '-10101': 'This task has already been completed. No need to resubmit.',
   '-10102': 'This task is still in progress. No need to resubmit.',
