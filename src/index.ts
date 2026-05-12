@@ -63,6 +63,7 @@ class PrimusNetwork {
         return;
       }
     }
+    console.log('reportEventIfNeeded', JSON.stringify(rawDataObj));
     await eventReport(rawDataObj);
   }
 
@@ -168,6 +169,7 @@ class PrimusNetwork {
    * @param taskId - Task ID (for storing extended data)
    * @param taskTxHash - Task transaction hash (for event reporting)
    * @param responseResolves - Same as attest() `attestParams.responseResolves` (for getPlainResponse)
+   * @param extra - Optional key-value pairs merged into the report payload `ext` (SDK fields still win on key collision)
    * @returns Returns the attestation result object
    * @throws ZkAttestationError Throws error when attestation fails
    */
@@ -178,7 +180,8 @@ class PrimusNetwork {
     timeout: number,
     taskId: string,
     taskTxHash: string,
-    responseResolves: AttestAfterSubmitTaskParams['responseResolves']
+    responseResolves: AttestAfterSubmitTaskParams['responseResolves'],
+    extra?: Record<string, any>
   // @ts-ignore TS2366: All code paths throw or return, but TypeScript cannot infer this
   ): Promise<{
     encodedDataObj: any;
@@ -196,6 +199,7 @@ class PrimusNetwork {
       templateId: "",
       address: attestationParams.address,
       ext: {
+        ...(extra ?? {}),
         taskTxHash,
         attestor: api,
         chainId: this.chainId
@@ -379,7 +383,11 @@ class PrimusNetwork {
     }
   }
 
-  async attest(attestParams: AttestAfterSubmitTaskParams, timeout: number = 2 * ONEMINUTE): Promise<RawAttestationResultList> {
+  async attest(
+    attestParams: AttestAfterSubmitTaskParams,
+    timeout: number = 2 * ONEMINUTE,
+    extra?: Record<string, any>
+  ): Promise<RawAttestationResultList> {
     return new Promise(async (resolve, reject) => {
       // Validate parameters
       try {
@@ -443,7 +451,8 @@ class PrimusNetwork {
               timeout,
               taskId,
               taskTxHash,
-              attestParams.responseResolves
+              attestParams.responseResolves,
+              extra
             );
             attArr.push(result.encodedDataObj);
           } catch (error) {
