@@ -7,3 +7,4 @@ build
 tsconfig.tsbuildinfo
 .env
 sync-client-plugin.sh
+.cursorrules

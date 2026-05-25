@@ -4,6 +4,23 @@ export const ATTESTATIONPOLLINGTIME = 1 * ONESECOND;
 export const ATTESTATIONPOLLINGTIMEOUT = 2 * ONEMINUTE;
 export const ATTESTATIONPOLLINGTIMEOUTMOBILE = 5 * ONEMINUTE;
 
+/**
+ * Canonical PRIM ERC20 contract address per chain ID (used for approve before submitTask).
+ * Omit a chain until the deployment address is known.
+ */
+export const DEFAULT_PRIM_TOKEN_ADDRESS_BY_CHAIN_ID: Readonly<Partial<Record<number, string>>> = {
+  84532: '0x06d0138A88D4D6111C51f7BfCaDe60c4bb622c97'
+};
+
+/**
+ * Canonical PRIM ERC20 contract address for `chainId` (used for approve before submitTask).
+ */
+export function resolvePrimTokenAddress(chainId: number): string | undefined {
+  const fromMap = DEFAULT_PRIM_TOKEN_ADDRESS_BY_CHAIN_ID[chainId];
+  const fromTrim = fromMap?.trim();
+  return fromTrim || undefined;
+}
+
 export const SUPPORTEDCHAINIDSMAP = {
   84532: {
     isTestnet: true,

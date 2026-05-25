@@ -43,6 +43,7 @@ export type AttMode = {
 }
 export type PrimaryAttestationParams = {
   address: string;
+  tokenSymbol?: TokenSymbol;
 }
 export type BaseAttestationParams = {
   userAddress: string;
@@ -154,9 +155,12 @@ export interface TaskInfo {
   tokenSymbol: TokenSymbol; // enum
   callback: string;
 }
-// export type SubmitTaskParams = PrimaryAttestationParams & {
-//   attestorCount?: number;
-// }
+export type SubmitTaskContractParams = PrimaryAttestationParams & {
+  templateId: string;
+  attestorCount?: number;
+  tokenAddress?: string;
+  callbackAddress?: string;
+}
 export type SubmitTaskReturnParams = {
   taskId: string;
   taskTxHash: string;
@@ -164,7 +168,8 @@ export type SubmitTaskReturnParams = {
 }
 
 export enum TokenSymbol {
-  ETH
+  ETH,
+  PRIM
 }
 export enum ProgressStatus {
   INIT = 0,

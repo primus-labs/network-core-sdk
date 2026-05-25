@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { SUPPORTEDCHAINIDS, SUPPORTEDCHAINIDSMAP, ONEMINUTE } from "./config/constants";
+import { SUPPORTEDCHAINIDS, SUPPORTEDCHAINIDSMAP, ONEMINUTE, resolvePrimTokenAddress } from "./config/constants";
 import { ENV } from './config/env';
 import { assemblyParams } from './assembly_params';
 import { init, getAttestation, getAttestationResult, AlgorithmBackend } from "./primus_zk";
@@ -120,13 +120,14 @@ class PrimusNetwork {
   }
 
   async submitTask(attestParams: PrimaryAttestationParams) {
-    const { address } = attestParams;
+    const { address, tokenSymbol } = attestParams;
     return new Promise(async (resolve, reject) => {
       try {
         const submitTaskParams = {
           templateId: '',
           address,
-          attestorCount: 1
+          attestorCount: 1,
+          tokenSymbol
         }
         const submitTaskRes = await this._submitTask(submitTaskParams)
         // console.log('submitTask done', submitTaskRes)
@@ -140,11 +141,30 @@ class PrimusNetwork {
 
   private async _submitTask(submitTaskParams: PrimaryAttestationParams): Promise<SubmitTaskReturnParams> {
     // const { templateId, address, attestorCount = 1 } = submitTaskParams
-    const { address } = submitTaskParams
+    const { address, tokenSymbol: tokenSymbolArg } = submitTaskParams
     const attestorCount = 1
     return new Promise(async (resolve, reject) => {
       try {
-        const taskRes = await this._taskContract?.submitTask(address, '', attestorCount)
+        if (tokenSymbolArg !== undefined && tokenSymbolArg !== TokenSymbol.ETH && tokenSymbolArg !== TokenSymbol.PRIM) {
+          throw new Error('tokenSymbol must be TokenSymbol.ETH (0) or TokenSymbol.PRIM (1) when provided.');
+        }
+
+        const tokenSymbol = tokenSymbolArg ?? TokenSymbol.ETH;
+        const effectiveTokenAddress = tokenSymbol === TokenSymbol.PRIM ? resolvePrimTokenAddress(this.chainId) : undefined;
+
+        if (tokenSymbol === TokenSymbol.PRIM && !effectiveTokenAddress) {
+          throw new Error(
+            `PRIM token contract address is not configured for chainId ${this.chainId}. Add DEFAULT_PRIM_TOKEN_ADDRESS_BY_CHAIN_ID.`
+          );
+        }
+
+        const taskRes = await this._taskContract?.submitTask({
+          address,
+          templateId: '',
+          attestorCount,
+          tokenSymbol,
+          tokenAddress: effectiveTokenAddress
+        })
         const taskTxHash = taskRes?.transactionHash as string;
         const taskTxData = TaskContract.parseTxEvent(taskRes, 'SubmitTask')
         const { taskId, attestors } = taskTxData as any
@@ -691,3 +711,4 @@ class PrimusNetwork {
 }
 
 export { PrimusNetwork };
+export { TokenSymbol } from './types/index';

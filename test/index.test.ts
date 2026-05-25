@@ -69,6 +69,7 @@ describe('PrimusNetwork', () => {
       const testAddress = '0x810b7bacEfD5ba495bB688bbFD2501C904036AB7'; // Example address
       const attestParams: PrimaryAttestationParams = {
         address: testAddress,
+        // tokenSymbol: 1,
       };
 
       try {
