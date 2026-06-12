@@ -238,6 +238,10 @@ class PrimusNetwork {
             code: errorCode,
             desc: ""
           },
+          ext: {
+            ...eventReportBaseParams.ext,
+            getAttestationRes: JSON.stringify(getAttestationRes)
+          }
         })
         throw new ZkAttestationError(errorCode)
       }
@@ -302,6 +306,10 @@ class PrimusNetwork {
               code: errorCode,
               desc: ""
             },
+            ext: {
+              ...eventReportBaseParams.ext,
+              getAttestationResultRes: JSON.stringify(res)
+            }
           })
           throw new ZkAttestationError(errorCode as AttestationErrorCode, '', res)
         }
@@ -327,6 +335,10 @@ class PrimusNetwork {
             code: reportCode,
             desc: '',
           },
+          ext: {
+            ...eventReportBaseParams.ext,
+            getAttestationResultRes: JSON.stringify(res)
+          }
         });
         throw new ZkAttestationError(
           resolvedCode as AttestationErrorCode,
