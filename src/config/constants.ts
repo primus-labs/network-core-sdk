@@ -67,7 +67,19 @@ export const SUPPORTEDCHAINIDSMAP = {
     },
     taskContractAddress: '0x1c5D0d5e0a3e0a5c9B0cDcF5C25A892281e4cd04',
     nodeContractAddress: '0x3CF341692deAD89AD0e98141B768eF3Ad89CDCa7',
+  },
+  97: {
+    chainId: 97,
+    chainName: 'BNB Smart Chain Testnet',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'BNB',
+      symbol: 'tBNB',
+    },
+    taskContractAddress: '0x05e55E36C33324C81e163125d36Ac26f585ACa8e',
+    nodeContractAddress: '0xE8AeA2A1d891bA268c16b657B9A53EF187425c21',
   }
+
 };
 
 
