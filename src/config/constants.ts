@@ -78,8 +78,18 @@ export const SUPPORTEDCHAINIDSMAP = {
     },
     taskContractAddress: '0x05e55E36C33324C81e163125d36Ac26f585ACa8e',
     nodeContractAddress: '0xE8AeA2A1d891bA268c16b657B9A53EF187425c21',
+  },
+  56: {
+    chainId: 56,
+    chainName: 'BNB Smart Chain',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'BNB',
+      symbol: 'BNB',
+    },
+    taskContractAddress: '0x7be04E0a97BD34aBBf510D963d55B6B89C37673d',
+    nodeContractAddress: '0xC3B952a0Cca681DB01334E01669b7823beBC6839',
   }
-
 };
 
 
