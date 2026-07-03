@@ -69,6 +69,7 @@ export const SUPPORTEDCHAINIDSMAP = {
     nodeContractAddress: '0x3CF341692deAD89AD0e98141B768eF3Ad89CDCa7',
   },
   97: {
+    isTestnet: true,
     chainId: 97,
     chainName: 'BNB Smart Chain Testnet',
     nativeCurrency: {
