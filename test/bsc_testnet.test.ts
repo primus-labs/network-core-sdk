@@ -1,6 +1,6 @@
 import { PrimusNetwork } from '../src/index';
 import { ethers } from 'ethers';
-import { PrimaryAttestationParams, SubmitTaskReturnParams } from '../src/types/index';
+import { AttMode, PrimaryAttestationParams, SubmitTaskReturnParams } from '../src/types/index';
 import dotenv from 'dotenv';
 
 describe('PrimusNetwork (BSC Testnet, chainId 97)', () => {
@@ -67,11 +67,17 @@ describe('PrimusNetwork (BSC Testnet, chainId 97)', () => {
           ]
         ];
 
+        const attMode: AttMode = {
+          algorithmType: 'mpctls',
+          resultType: 'plain',
+        };
+
         const attestParams2 = {
           ...attestParams,
           ...submitResult,
           requests,
           responseResolves,
+          attMode,
         };
 
         const attestResult = await primusNetwork.attest(attestParams2);
