@@ -4,6 +4,22 @@ export const ATTESTATIONPOLLINGTIME = 1 * ONESECOND;
 export const ATTESTATIONPOLLINGTIMEOUT = 2 * ONEMINUTE;
 export const ATTESTATIONPOLLINGTIMEOUTMOBILE = 5 * ONEMINUTE;
 
+/** Base mainnet chain ID. */
+export const BASE_MAINNET_CHAIN_ID = 8453;
+
+/** Base Sepolia testnet chain ID. */
+export const BASE_SEPOLIA_CHAIN_ID = 84532;
+
+/** Base chains where Builder Code (ERC-8021) attribution applies. */
+export const BASE_BUILDER_CODE_CHAIN_IDS: readonly number[] = [
+  BASE_MAINNET_CHAIN_ID,
+  BASE_SEPOLIA_CHAIN_ID,
+];
+
+export function isBaseBuilderCodeChainId(chainId: number): boolean {
+  return BASE_BUILDER_CODE_CHAIN_IDS.includes(chainId);
+}
+
 /**
  * Canonical PRIM ERC20 contract address per chain ID (used for approve before submitTask).
  * Omit a chain until the deployment address is known.

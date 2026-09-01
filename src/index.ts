@@ -1,11 +1,14 @@
 import { ethers } from 'ethers';
-import { SUPPORTEDCHAINIDS, SUPPORTEDCHAINIDSMAP, ONEMINUTE, resolvePrimTokenAddress } from "./config/constants";
+import { SUPPORTEDCHAINIDS, SUPPORTEDCHAINIDSMAP, ONEMINUTE, resolvePrimTokenAddress, isBaseBuilderCodeChainId } from "./config/constants";
+import { BASE_BUILDER_CODES } from './config/builderCodes';
 import { ENV } from './config/env';
 import { assemblyParams } from './assembly_params';
 import { init, getAttestation, getAttestationResult, AlgorithmBackend } from "./primus_zk";
 import { NodeContract } from "./classes/NodeContract";
 import { TaskContract } from "./classes/TaskContract";
 import { findFastestWs, resultToObject, formatErrFn, getRawHtmlByXPath, parseJsonByJsonPath } from "./utils";
+import { withBuilderCodeProvider } from './utils/withBuilderCodeProvider';
+import { withBuilderCodeSigner } from './utils/withBuilderCodeSigner';
 import { TaskStatus, TaskResult, SubmitTaskReturnParams, AttestAfterSubmitTaskParams, TokenSymbol, RawAttestationResultList, PrimaryAttestationParams } from './types/index'
 import { SDK_VERSION } from './version';
 import { ZkAttestationError } from './classes/Error';
@@ -37,6 +40,31 @@ class PrimusNetwork {
   private _allResponseResolves: Record<string, any> = {};
   private _isAttesting: boolean = false;
   private _appName: string = '';
+
+  private wrapProviderForBuilderCodes(provider: unknown, chainId: number): unknown {
+    if (!isBaseBuilderCodeChainId(chainId) || BASE_BUILDER_CODES.length === 0) {
+      return provider;
+    }
+
+    if (provider instanceof ethers.providers.JsonRpcProvider) {
+      return provider;
+    }
+
+    if (provider instanceof ethers.providers.BaseProvider) {
+      return provider;
+    }
+
+    if (
+      provider &&
+      typeof provider === 'object' &&
+      '_isSigner' in provider &&
+      (provider as { _isSigner?: boolean })._isSigner
+    ) {
+      return withBuilderCodeSigner(provider as ethers.Signer, chainId, BASE_BUILDER_CODES);
+    }
+
+    return withBuilderCodeProvider(provider as object, chainId, [...BASE_BUILDER_CODES]);
+  }
 
   private shouldReportEvent(): boolean {
     if (ENV !== 'production') {
@@ -80,17 +108,21 @@ class PrimusNetwork {
           return reject('chainId is not supported')
         }
 
+        const effectiveProvider = this.wrapProviderForBuilderCodes(provider, chainId);
+
         let formatProvider;
         let signer;
 
-        if (provider instanceof ethers.providers.JsonRpcProvider) {
-          formatProvider = provider;
+        if (effectiveProvider instanceof ethers.providers.JsonRpcProvider) {
+          formatProvider = effectiveProvider;
         } else {
-          if (provider?._isSigner) {
-            formatProvider = provider?.provider;
-            signer = provider;
+          if ((effectiveProvider as { _isSigner?: boolean })?._isSigner) {
+            formatProvider = (effectiveProvider as { provider: ethers.providers.Provider }).provider;
+            signer = effectiveProvider;
           } else {
-            formatProvider = new ethers.providers.Web3Provider(provider)
+            formatProvider = new ethers.providers.Web3Provider(
+              effectiveProvider as ethers.providers.ExternalProvider
+            );
             signer = formatProvider.getSigner();
           }
         }
@@ -103,7 +135,7 @@ class PrimusNetwork {
           return reject(`Please connect to the chain with ID ${chainId} first.`)
         }
 
-        this.provider = signer ?? formatProvider;
+        this.provider = (signer ?? formatProvider) as typeof this.provider;
         this.chainId = chainId;
         // console.log('init chainId', this.chainId);
         await init(mode, options);
@@ -724,3 +756,13 @@ class PrimusNetwork {
 
 export { PrimusNetwork };
 export { TokenSymbol } from './types/index';
+export { createBuilderDataSuffix, hasBuilderCodeSuffix, appendBuilderCodeToTxData } from './utils/builderCodeAttribution';
+export { withBuilderCodeProvider } from './utils/withBuilderCodeProvider';
+export { withBuilderCodeSigner } from './utils/withBuilderCodeSigner';
+export {
+  BASE_MAINNET_CHAIN_ID,
+  BASE_SEPOLIA_CHAIN_ID,
+  BASE_BUILDER_CODE_CHAIN_IDS,
+  isBaseBuilderCodeChainId,
+} from './config/constants';
+export { BASE_BUILDER_CODE, BASE_BUILDER_CODES } from './config/builderCodes';
