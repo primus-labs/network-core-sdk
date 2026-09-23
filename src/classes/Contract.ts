@@ -1,3 +1,4 @@
+import { defaultLogger, Logger } from '../logger';
 import { ethers } from 'ethers';
 import { ContractReceipt } from "ethers";
 class Contract {
@@ -9,7 +10,7 @@ class Contract {
    * @param chainName The name of the chain, used to identify and differentiate between different chains.
    * @param provider The provider object for the blockchain, used to establish and manage the connection with the blockchain.
    */
-  constructor(address: string, abiJson: any, provider: any) {
+  constructor(address: string, abiJson: any, provider: any, private readonly logger: Logger = defaultLogger) {
     if (!provider || !address || !abiJson) {
         throw new Error('provider, address, and abiJson are required');
     }
@@ -39,8 +40,7 @@ class Contract {
     }
 
     try {
-      // eslint-disable-next-line no-console
-      console.log('sendTransaction params:', functionName, ...functionParams);
+      this.logger.info('sendTransaction params:', functionName, ...functionParams);
 
       const tx = await this.contractInstance[functionName](...functionParams);
       // console.time('txreceiptTimeInSdk');
@@ -50,8 +50,7 @@ class Contract {
       // resolve(tx.hash);
       return txReceipt;
     } catch (error: unknown) {
-      // eslint-disable-next-line no-console
-      console.log('sendTransaction error:', error);
+      this.logger.info('sendTransaction error:', error);
       throw error;
     }
   }

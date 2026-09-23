@@ -1,3 +1,4 @@
+import { defaultLogger, Logger } from './logger';
 import { Attestation, AttNetworkRequest, AttNetworkResponseResolve } from './types/index'
 // const { ethers } = require("ethers");
 import { ethers } from "ethers";
@@ -94,7 +95,7 @@ export function encodeResponse(reponse: AttNetworkResponseResolve[]) {
   return ethers.utils.keccak256(encodeData);
 }
 
-export async function sendRequest(url: string, options?: RequestInit): Promise<any> {
+export async function sendRequest(url: string, options?: RequestInit, logger: Logger = defaultLogger): Promise<any> {
   try {
     const response = await fetch(url, options);
     if (!response.ok) {
@@ -102,7 +103,7 @@ export async function sendRequest(url: string, options?: RequestInit): Promise<a
     }
     return await response.json();
   } catch (error) {
-    console.error('Request failed:', error);
+    logger.error('Request failed:', error);
     throw error;
   }
 }
@@ -154,8 +155,8 @@ export function getPlatformDevice() {
   return platformDevice
 }
 
-export function findFastestWs(urls: string[], timeoutMs: number = 5000): Promise<string> {
-  console.log('findFastestWs', urls)
+export function findFastestWs(urls: string[], timeoutMs: number = 5000, logger: Logger = defaultLogger): Promise<string> {
+  logger.info('findFastestWs', urls)
   return new Promise((resolve, reject) => {
     if (urls?.length === 1) {
       return resolve(urls[0])
