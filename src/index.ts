@@ -1,3 +1,5 @@
+import { defaultLogger, Logger, PrimusNetworkOptions } from './logger';
+export type { Logger, PrimusNetworkOptions } from './logger';
 import { ethers } from 'ethers';
 import { SUPPORTEDCHAINIDS, SUPPORTEDCHAINIDSMAP, ONEMINUTE, resolvePrimTokenAddress, isBaseBuilderCodeChainId } from "./config/constants";
 import { BASE_BUILDER_CODES } from './config/builderCodes';
@@ -28,6 +30,12 @@ function buildEventReportCode(code: string, subCode: unknown): string {
 const EVENT_REPORT_SKIP_FAILED_CODES = new Set(['00003', '00004', '00005']);
 
 class PrimusNetwork {
+  private readonly logger: Logger;
+
+  constructor(options: PrimusNetworkOptions = {}) {
+    this.logger = options.logger ?? defaultLogger;
+  }
+
   private provider!: ethers.providers.Web3Provider | ethers.providers.JsonRpcProvider | ethers.providers.JsonRpcSigner;
   public supportedChainIds = SUPPORTEDCHAINIDS;
   private chainId!: number;
@@ -91,8 +99,8 @@ class PrimusNetwork {
         return;
       }
     }
-    console.log('reportEventIfNeeded', JSON.stringify(rawDataObj));
-    await eventReport(rawDataObj);
+    this.logger.info('reportEventIfNeeded', JSON.stringify(rawDataObj));
+    await eventReport(rawDataObj, this.logger);
   }
 
   async init(
@@ -138,10 +146,10 @@ class PrimusNetwork {
         this.provider = (signer ?? formatProvider) as typeof this.provider;
         this.chainId = chainId;
         // console.log('init chainId', this.chainId);
-        await init(mode, options);
+        await init(mode, options, this.logger);
         const activeChainInfo = SUPPORTEDCHAINIDSMAP[chainId as keyof typeof SUPPORTEDCHAINIDSMAP]
-        this._taskContract = new TaskContract(this.provider, activeChainInfo.taskContractAddress);
-        this._nodeContract = new NodeContract(this.provider, activeChainInfo.nodeContractAddress);
+        this._taskContract = new TaskContract(this.provider, activeChainInfo.taskContractAddress, this.logger);
+        this._nodeContract = new NodeContract(this.provider, activeChainInfo.nodeContractAddress, this.logger);
         this._appName = name;
         // console.log('init _nodeContract', this._nodeContract);
         return resolve(true);
@@ -281,7 +289,7 @@ class PrimusNetwork {
       // console.log('getAttestationResult:', JSON.stringify(res));
       const submitEndTime = Date.now();
       const submitTime = submitEndTime - submitStartTime;
-      console.log('----------Attest algorithm duration:', submitTime);
+      this.logger.info('----------Attest algorithm duration:', submitTime);
       // console.log('getAttestationResult:', res);
       const { retcode, content, details } = res
       if (retcode === '0') {
@@ -476,8 +484,8 @@ class PrimusNetwork {
         const attestorsUrlsArr = attestorsInfoArr.map((info: any) => info.urls)// [['api1', 'api2'], ['api2', 'api4']]
         // console.log('getNodesInfo done', attestorsInfoArr)
         // 2.Select the fastest URL for each selected node through speed testing.
-        const attestorsUrlArr = await Promise.all(attestorsUrlsArr.map((attestorUrls) => findFastestWs(attestorUrls)))
-        console.log('testSpeed done', attestorsUrlArr)
+        const attestorsUrlArr = await Promise.all(attestorsUrlsArr.map((attestorUrls) => findFastestWs(attestorUrls, undefined, this.logger)))
+        this.logger.info('testSpeed done', attestorsUrlArr)
         // 3.Use the selected nodes to perform proofs sequentially.
         let attArr: RawAttestationResultList = []
 
@@ -523,7 +531,7 @@ class PrimusNetwork {
             return reject(error);
           }
         }
-        console.log('attestationList from algorithm', attArr);
+        this.logger.info('attestationList from algorithm', attArr);
         return resolve(attArr);
       } catch (error) {
         return reject(error);
@@ -566,7 +574,7 @@ class PrimusNetwork {
       const parsed = JSON.parse(privateData);
       return parsed[keyName];
     } catch (err) {
-      console.error("Failed to parse privateData:", (err as Error).message);
+      this.logger.error("Failed to parse privateData:", (err as Error).message);
       return undefined;
     }
   }
@@ -575,7 +583,7 @@ class PrimusNetwork {
     try {
       const extendedData = this._extendedData[taskId];
       if (typeof extendedData !== 'string' || extendedData.trim() === '') {
-        console.warn("No extended data provided or it's empty");
+        this.logger.warn("No extended data provided or it's empty");
         return undefined;
       }
 
@@ -585,7 +593,7 @@ class PrimusNetwork {
         ?? ciphertext.PartialHttpResponseCiphertext;
 
       if (!p) {
-        console.warn("No ciphertext found in extended data");
+        this.logger.warn("No ciphertext found in extended data");
         return undefined;
       }
 
@@ -593,7 +601,7 @@ class PrimusNetwork {
 
       return po?.packets?.[0]?.aes_key;
     } catch (err) {
-      console.error("Failed to parse extended data:", (err as Error).message);
+      this.logger.error("Failed to parse extended data:", (err as Error).message);
       return undefined;
     }
   }
@@ -630,12 +638,12 @@ class PrimusNetwork {
         const res = await this._taskContract?.queryUnsettledTasks(address, tokenSymbol, offset, limit)
         let obj = resultToObject(res)
         const taskInfos = obj.taskInfos
-        console.log('queryUnsettledTasks', taskInfos)
+        this.logger.info('queryUnsettledTasks', taskInfos)
         const taskTimeout = await this._taskContract?.queryTaskTimeout()
         let newArr = taskInfos.filter((i: any) => {
           // const { attestors, callback, submittedAt, submitter, taskResults, taskStatus, templateId, tokenSymbol } = i
           const taskTime = i.submittedAt.toNumber()
-          console.log('taskTime', taskTime, taskTimeout)
+          this.logger.info('taskTime', taskTime, taskTimeout)
           const refundable = Date.now() / 1000 - taskTime > (taskTimeout as number)
           return refundable
         })

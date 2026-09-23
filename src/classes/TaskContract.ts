@@ -1,3 +1,4 @@
+import { defaultLogger, Logger } from '../logger';
 import { ContractReceipt, BigNumber, ethers } from "ethers";
 import Contract from './Contract';
 import Erc20Contract from './Erc20Contract';
@@ -15,11 +16,11 @@ function isZeroOrInvalidAddress(addr: string): boolean {
 
 class TaskContract {
   contractInstance: any;
-  constructor(provider: any, address: string) {
+  constructor(provider: any, address: string, logger: Logger = defaultLogger) {
     if (!provider || !address) {
       throw new Error('provider, address are required');
     }
-    this.contractInstance = new Contract(address, abi, provider);
+    this.contractInstance = new Contract(address, abi, provider, logger);
   }
 
   async submitTask(submitParams: SubmitTaskContractParams): Promise<ContractReceipt> {

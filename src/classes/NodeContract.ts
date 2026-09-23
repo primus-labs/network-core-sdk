@@ -1,14 +1,15 @@
+import { defaultLogger, Logger } from '../logger';
 import Contract from './Contract';
 import abi from '../config/nodeAbi.json';
 import { NodeInfo } from '../types/index'
 
 class NodeContract {
   contractInstance: any;
-  constructor(provider: any, address: string) {
+  constructor(provider: any, address: string, logger: Logger = defaultLogger) {
     if (!provider || !address) {
       throw new Error('provider, address are required');
     }
-    this.contractInstance = new Contract(address, abi, provider);
+    this.contractInstance = new Contract(address, abi, provider, logger);
   }
 
   async getNodeInfo(nodeId: string): Promise<NodeInfo> {

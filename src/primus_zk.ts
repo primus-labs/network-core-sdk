@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { defaultLogger, Logger } from './logger';
 import os from 'os';
 import path from 'path';
 global.WebSocket = require('ws');
@@ -6,14 +7,14 @@ export type AlgorithmBackend = 'auto' | 'native' | 'wasm';
 
 const DEFAULT_VERSION = "1.4.6";
 let algorithmVersion = DEFAULT_VERSION;
-async function initAlgorithm(mode: AlgorithmBackend = 'auto'): Promise<(params: string) => Promise<string>> {
+async function initAlgorithm(mode: AlgorithmBackend = 'auto', logger: Logger = defaultLogger): Promise<(params: string) => Promise<string>> {
   const tryLoadNative = (): ((params: string) => Promise<string>) | null => {
     try {
       const addon = require(path.join(__dirname, '../build/Release/primus-zktls-native.node'));
-      console.log('[info] Native addon loaded.');
+      logger.info('[info] Native addon loaded.');
       return async (params: string) => addon.callAlgorithm(params);
     } catch (e) {
-      console.warn('[warn] Native addon failed:', e.message);
+      logger.warn('[warn] Native addon failed:', e.message);
       return null;
     }
   };
@@ -25,10 +26,10 @@ async function initAlgorithm(mode: AlgorithmBackend = 'auto'): Promise<(params: 
         Module.onRuntimeInitialized = () => {
           try {
             const Module_callAlgorithm = Module.cwrap('callAlgorithm', 'string', ['string']);
-            console.log('[info] WASM module initialized.');
+            logger.info('[info] WASM module initialized.');
             resolve(async (params: string) => Module_callAlgorithm(params));
           } catch (e) {
-            console.error('[error] cwrap failed:', e);
+            logger.error('[error] cwrap failed:', e);
             reject(e);
           }
         };
@@ -38,7 +39,7 @@ async function initAlgorithm(mode: AlgorithmBackend = 'auto'): Promise<(params: 
         }, 5000); // e.g. 5s
       });
     } catch (e) {
-      console.error('[error] WASM module load failed:', e);
+      logger.error('[error] WASM module load failed:', e);
       return null;
     }
   };
@@ -56,18 +57,18 @@ async function initAlgorithm(mode: AlgorithmBackend = 'auto'): Promise<(params: 
   // auto
   const native = await tryLoadNative();
   if (native) {
-    console.log("Use Native Mode.");
+    logger.info("Use Native Mode.");
     return native
   };
 
-  console.log("Use WASM Mode.");
+  logger.info("Use WASM Mode.");
   return await tryLoadWasm();
 }
 
 let callAlgorithm = null;
-export const init = async (mode: AlgorithmBackend = 'auto', options: { algorithmVersion?: string } = {}) => {
+export const init = async (mode: AlgorithmBackend = 'auto', options: { algorithmVersion?: string } = {}, logger: Logger = defaultLogger) => {
   algorithmVersion = options.algorithmVersion ?? DEFAULT_VERSION;
-  callAlgorithm = await initAlgorithm(mode);
+  callAlgorithm = await initAlgorithm(mode, logger);
 
   const logParams = `{"method":"setLogLevel","version":"${algorithmVersion}","params":{"logLevel":"error"}}`;
   const logResult = await callAlgorithm(logParams);
